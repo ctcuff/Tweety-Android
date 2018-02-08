@@ -2,7 +2,6 @@ package com.camtech.android.tweetbot;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -14,7 +13,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.camtech.android.tweetbot.twitter.TwitterUtils;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,10 +1,8 @@
 package com.camtech.android.tweetbot.activities;
 
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -12,7 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.twitter.TwitterUtils;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;

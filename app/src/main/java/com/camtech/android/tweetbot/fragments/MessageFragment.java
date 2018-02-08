@@ -18,8 +18,8 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.twitter.TwitterService;
-import com.camtech.android.tweetbot.twitter.TwitterUtils;
+import com.camtech.android.tweetbot.utils.TwitterService;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import twitter4j.TwitterException;
 

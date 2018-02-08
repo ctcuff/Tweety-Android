@@ -11,8 +11,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.SystemClock;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -29,9 +27,9 @@ import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
-import com.camtech.android.tweetbot.twitter.StreamListener;
-import com.camtech.android.tweetbot.twitter.TwitterService;
-import com.camtech.android.tweetbot.twitter.TwitterUtils;
+import com.camtech.android.tweetbot.utils.StreamListener;
+import com.camtech.android.tweetbot.utils.TwitterService;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import twitter4j.Status;
 
