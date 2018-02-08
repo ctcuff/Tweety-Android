@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#1DA1F2</color>
+    <color name="colorPrimaryDark">#1A99F0</color>
+    <color name="colorAccent">#1185EC</color>
+
+    <!--The color for activity backgrounds as well as notifications-->
+    <color name="colorOccurrences">#1DA1F2</color>
+    <color name="colorMessages">#a52c9f</color>
+    <color name="colorNotificationError">#ff0000</color>
+    <color name="colorSuccess">#00ff00</color>
+
+    <color name="black_overlay">#66000000</color>
+</resources>

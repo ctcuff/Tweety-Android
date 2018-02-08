@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@color/colorOccurrences"
+    tools:context="com.camtech.android.tweetbot.fragments.OccurrencesFragment">
+
+    <ImageView
+        android:id="@+id/ic_graph"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_graph"
+        android:layout_marginTop="14dp"
+        android:layout_marginStart="16dp"/>
+
+    <TextView
+        android:id="@+id/tv_keyword"
+        android:layout_width="200dp"
+        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="@string/keyword"
+        tools:text="KeyWord: Kendrick Lamar"/>
+
+    <ImageView
+        android:contentDescription="Opens the settings activity"
+        android:id="@+id/ic_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="8dp"
+        android:src="@drawable/ic_settings" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp"
+            android:text="Occurrences"/>
+
+        <TextView
+            android:id="@+id/tv_num_occurrences"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="60sp"
+            android:gravity="center"
+            tools:text="30"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/bt_start_stop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorOccurrences"
+        android:textColor="#FFFFFF"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:text="Start" />
+
+</RelativeLayout>

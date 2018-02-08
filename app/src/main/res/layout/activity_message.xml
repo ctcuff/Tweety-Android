@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@color/colorMessages"
+    tools:context="com.camtech.android.tweetbot.fragments.OccurrencesFragment">
+
+
+    <TextView
+        android:id="@+id/tv_username"
+        android:layout_width="250dp"
+        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        tools:text="\@CamsTweetBot"/>
+
+    <ImageView
+        android:id="@+id/ic_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="8dp"
+        android:src="@drawable/ic_settings" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="40sp"
+            android:text="Tweet Bot"/>
+
+        <TextView
+            android:id="@+id/tv_running_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp"
+            android:gravity="center"
+            tools:text="Running"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/bt_start_stop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorMessages"
+        android:textColor="#FFFFFF"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:text="Start" />
+
+</RelativeLayout>
