@@ -52,7 +52,6 @@ public class HistoryActivity extends AppCompatActivity
         if (hashMap != null) {
             keyWord = new String[hashMap.entrySet().size()];
             value = new int[hashMap.keySet().size()];
-            value = new int[hashMap.entrySet().size()];
             int index = 0;
             for (Map.Entry<String, Integer> map : hashMap.entrySet()) {
                 Log.i(TAG, "Keyword: " + map.getKey() + " | Value: " + map.getValue());
