@@ -106,7 +106,8 @@ public class MessageFragment extends Fragment {
 
     /**
      * AsyncTask to load the username of the bot. This is
-     * so that the username will update if the bots
+     * so that the username will update if the bots username
+     * is ever changed.
      * */
     public class ConnectionUtils extends AsyncTask<Void, Void, String> {
         String userName;
