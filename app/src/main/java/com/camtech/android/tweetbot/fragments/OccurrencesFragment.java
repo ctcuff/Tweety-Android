@@ -27,9 +27,9 @@ import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
-import com.camtech.android.tweetbot.twitter.StreamListener;
-import com.camtech.android.tweetbot.twitter.TwitterService;
-import com.camtech.android.tweetbot.twitter.TwitterUtils;
+import com.camtech.android.tweetbot.tweet.StreamListener;
+import com.camtech.android.tweetbot.tweet.TwitterService;
+import com.camtech.android.tweetbot.tweet.TwitterUtils;
 
 import twitter4j.Status;
 

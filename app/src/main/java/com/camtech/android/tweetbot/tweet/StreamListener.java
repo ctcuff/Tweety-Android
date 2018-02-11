@@ -1,4 +1,4 @@
-package com.camtech.android.tweetbot.twitter;
+package com.camtech.android.tweetbot.tweet;
 
 import android.app.NotificationManager;
 import android.content.Context;
@@ -26,10 +26,10 @@ import twitter4j.User;
 import twitter4j.UserList;
 import twitter4j.UserStreamListener;
 
-import static com.camtech.android.tweetbot.twitter.Dictionary.botGreetings;
-import static com.camtech.android.tweetbot.twitter.Dictionary.misunderstandings;
-import static com.camtech.android.tweetbot.twitter.Dictionary.quotes;
-import static com.camtech.android.tweetbot.twitter.Dictionary.userGreetings;
+import static com.camtech.android.tweetbot.tweet.Dictionary.botGreetings;
+import static com.camtech.android.tweetbot.tweet.Dictionary.misunderstandings;
+import static com.camtech.android.tweetbot.tweet.Dictionary.quotes;
+import static com.camtech.android.tweetbot.tweet.Dictionary.userGreetings;
 
 public class StreamListener implements UserStreamListener {
 

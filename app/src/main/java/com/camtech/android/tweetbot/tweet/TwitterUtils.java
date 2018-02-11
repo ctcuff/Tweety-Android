@@ -1,4 +1,4 @@
-package com.camtech.android.tweetbot.twitter;
+package com.camtech.android.tweetbot.tweet;
 
 import android.os.Environment;
 import android.util.Log;
