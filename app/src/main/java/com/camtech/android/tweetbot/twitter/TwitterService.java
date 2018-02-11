@@ -1,4 +1,4 @@
-package com.camtech.android.tweetbot.utils;
+package com.camtech.android.tweetbot.twitter;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
@@ -34,10 +35,7 @@ public class TwitterService extends Service {
 
     private final String TAG = TwitterService.class.getSimpleName();
     private TwitterStream twitterStream;
-    private static final String PREF_KEYWORD = "prefKeyword";
-    private static final String DEFAULT_KEYWORD = "hello world";
     public static final String BROADCAST_UPDATE = "updateServiceStatus";
-    final String PREF_NUM_OCCURRENCES = "prefOccurrences";
     private final String INTENT_STOP_SERVICE = "stopService";
     public static final int ID_BOT_CONNECTED = 0;
     final int ID_CONNECTION_LOST = 1;
@@ -71,8 +69,8 @@ public class TwitterService extends Service {
         sendBroadcast(new Intent(BROADCAST_UPDATE));
         if (intent != null) mode = intent.getStringExtra(Intent.EXTRA_TEXT);
 
-        keywordPref = getSharedPreferences(PREF_KEYWORD, MODE_PRIVATE);
-        keyWord = keywordPref.getString(PREF_KEYWORD, DEFAULT_KEYWORD);
+        keywordPref = getSharedPreferences(getString(R.string.pref_keyword), MODE_PRIVATE);
+        keyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
 
         Twitter twitter = TwitterUtils.setUpBot().getInstance();
         twitterStream = new TwitterStreamFactory(TwitterUtils.setUpConfig()).getInstance();
@@ -105,8 +103,9 @@ public class TwitterService extends Service {
         builder.setStyle(new NotificationCompat.BigTextStyle());
         builder.setOngoing(false);
         builder.setShowWhen(false);
+        builder.setAutoCancel(true);
         builder.setSmallIcon(R.drawable.ic_stat_message);
-        builder.setContentTitle("Tweet Bot");
+        builder.setContentTitle("TwitterStream");
         builder.addAction(R.drawable.ic_stat_message, "OPEN", openActivity);
         builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
         builder.setVibrate(new long[]{});
@@ -114,29 +113,30 @@ public class TwitterService extends Service {
         if (mode != null && mode.equals("Occurrences")) {
             builder.setColor(getColor(R.color.colorOccurrences));
             builder.setUsesChronometer(true);
-            builder.setContentText("Listening for occurrences of \"" + keyWord + "\". Touch to stop");
+            builder.setContentText("Stream connected. Listening for occurrences of \"" + keyWord + "\". Touch to stop");
         } else {
             builder.setColor(getColor(R.color.colorMessages));
             builder.setContentText("Stream connected, listening for messages. Touch to stop");
         }
 
         // Intent to stop the service when the notification is clicked
-        PendingIntent pendingIntent = PendingIntent.getBroadcast
-                (this, ID_BOT_CONNECTED, new Intent(INTENT_STOP_SERVICE), PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, ID_BOT_CONNECTED, new Intent(INTENT_STOP_SERVICE), PendingIntent.FLAG_UPDATE_CURRENT);
         builder.setContentIntent(pendingIntent);
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (mode.equals("Occurrences")) notificationManager.notify(ID_BOT_CONNECTED, builder.build());
+
         twitterStream.addConnectionLifeCycleListener(new ConnectionLifeCycleListener() {
             @Override
             public void onConnect() {
+                Log.i(TAG, "onConnect...");
                 // This makes sure the notification only pops up on a successful connection
-                if (mode.equals("Message")) notificationManager.notify(ID_BOT_CONNECTED, builder.build());
+                notificationManager.notify(ID_BOT_CONNECTED, builder.build());
             }
 
             @Override
             public void onDisconnect() {
                 Log.i(TAG, "onDisconnect...");
+                notificationManager.cancel(ID_BOT_CONNECTED);
             }
 
             @Override
@@ -162,9 +162,9 @@ public class TwitterService extends Service {
         twitterStream.shutdown();
 
         // Save the keyword and number of occurrences into a HashMap
-        SharedPreferences numOccurrencesPref = getSharedPreferences(PREF_NUM_OCCURRENCES, MODE_PRIVATE);
-        keyWord = keywordPref.getString(PREF_KEYWORD, DEFAULT_KEYWORD);
-        int numOccurrences = numOccurrencesPref.getInt(PREF_NUM_OCCURRENCES, 0);
+        SharedPreferences numOccurrencesPref = getSharedPreferences(getString(R.string.pref_num_occurrences), MODE_PRIVATE);
+        keyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
+        int numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
         utils.saveHashMap(keyWord, numOccurrences);
     }
 
@@ -198,16 +198,28 @@ public class TwitterService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             // Mobile connection has dropped so we need to stop the service
+            AudioManager audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
             if (intent.getAction() != null && intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
                 if (!hasConnection()) {
                     builder = new NotificationCompat.Builder(context, "ConnectivityReceiver");
                     builder.setContentTitle("TwitterStream");
                     builder.setSmallIcon(R.drawable.ic_stat_message);
-                    builder.setContentText("Error connecting to stream");
+                    builder.setContentText("Error connecting to stream, no mobile data");
                     builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
                     // The vibration pattern is {delay, vibrate, sleep, vibrate}
-                    builder.setVibrate(new long[]{0, 200, 200, 200});
                     builder.setColor(getColor(R.color.colorNotificationError));
+                    // Don't vibrate if the user's device is on silent
+                    if (audio != null) {
+                        switch (audio.getRingerMode()) {
+                            case AudioManager.RINGER_MODE_NORMAL:
+                            case AudioManager.RINGER_MODE_VIBRATE:
+                                builder.setVibrate(new long[]{0, 200, 200, 200});
+                                break;
+                            case AudioManager.RINGER_MODE_SILENT:
+                                builder.setVibrate(new long[]{0});
+                                break;
+                        }
+                    }
                     notificationManager.notify(ID_CONNECTION_LOST, builder.build());
                     stopSelf();
                 }

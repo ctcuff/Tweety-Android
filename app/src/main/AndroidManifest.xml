@@ -28,7 +28,7 @@
             android:theme="@style/NoActionBar"/>
         <activity android:name=".activities.GraphActivity" />
 
-        <service android:name=".utils.TwitterService" />
+        <service android:name=".twitter.TwitterService" />
 
     </application>
 

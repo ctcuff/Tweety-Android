@@ -10,7 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.utils.TwitterUtils;
+import com.camtech.android.tweetbot.twitter.TwitterUtils;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
@@ -45,10 +45,12 @@ public class GraphActivity extends AppCompatActivity {
         TextView emptyGraphText = findViewById(R.id.graph_text);
         BarChart chart = findViewById(R.id.chart);
 
+        // Hide the notification bar and nav buttons
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
+        // Get the stored HashMap if it exists
         HashMap<String, Integer> hashMap = utils.getHashMap();
         if (hashMap == null) {
             // There's no data, so show the empty view
@@ -117,12 +119,11 @@ public class GraphActivity extends AppCompatActivity {
         super.onConfigurationChanged(newConfig);
         if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             finish();
-
         }
     }
 
     @Override
     public void onBackPressed() {
-        Toast.makeText(this, "Rotateyour deviceto go back", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Rotate your device to go back", Toast.LENGTH_LONG).show();
     }
 }

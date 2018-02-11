@@ -1,5 +1,6 @@
 package com.camtech.android.tweetbot.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,8 +19,8 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.utils.TwitterService;
-import com.camtech.android.tweetbot.utils.TwitterUtils;
+import com.camtech.android.tweetbot.twitter.TwitterService;
+import com.camtech.android.tweetbot.twitter.TwitterUtils;
 
 import twitter4j.TwitterException;
 
@@ -57,8 +58,13 @@ public class MessageFragment extends Fragment {
             }
         });
         updateButtonText();
-        new ConnectionUtils().execute();
         return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        new ConnectionUtils().execute();
     }
 
     @Override
@@ -105,9 +111,10 @@ public class MessageFragment extends Fragment {
     }
 
     /**
-     * AsyncTask to load the username of the bot. This is
-     * so that the username will update if the bots
+     * AsyncTask to load the username of the bot. This is so that
+     * the username will update if the bots username ever changes.
      * */
+    @SuppressLint("StaticFieldLeak")
     public class ConnectionUtils extends AsyncTask<Void, Void, String> {
         String userName;
 
@@ -123,7 +130,11 @@ public class MessageFragment extends Fragment {
 
         @Override
         protected void onPostExecute(String s) {
-            tvUserName.setText("@" + userName);
+            if (userName != null) {
+                tvUserName.setText("@" + userName);
+            } else {
+                tvUserName.setText("");
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.camtech.android.tweetbot.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -10,20 +11,20 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.camtech.android.tweetbot.HistoryViewAdapter;
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.utils.TwitterUtils;
+import com.camtech.android.tweetbot.twitter.TwitterUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HistoryActivity extends AppCompatActivity
-        implements HistoryViewAdapter.ClickListener, HistoryViewAdapter.LongClickListener {
+public class HistoryActivity extends AppCompatActivity implements HistoryViewAdapter.ClickListener {
 
     private final String TAG = HistoryActivity.class.getSimpleName();
-    HistoryViewAdapter viewAdapter;
     String[] keyWord;
     int[] value;
 
@@ -40,6 +41,8 @@ public class HistoryActivity extends AppCompatActivity
         setTitle("History");
         toolbar.setTitleTextColor(Color.WHITE);
 
+        TextView tvNoHistory = findViewById(R.id.tv_no_history);
+
         TwitterUtils utils = new TwitterUtils();
 
         RecyclerView recyclerView = findViewById(R.id.rv_occurrences);
@@ -49,10 +52,10 @@ public class HistoryActivity extends AppCompatActivity
         recyclerView.setHasFixedSize(true);
 
         HashMap<String, Integer> hashMap = utils.getHashMap();
-        if (hashMap != null) {
+        if (hashMap != null && !hashMap.isEmpty()) {
+            tvNoHistory.setVisibility(View.GONE);
             keyWord = new String[hashMap.entrySet().size()];
             value = new int[hashMap.keySet().size()];
-            value = new int[hashMap.entrySet().size()];
             int index = 0;
             for (Map.Entry<String, Integer> map : hashMap.entrySet()) {
                 Log.i(TAG, "Keyword: " + map.getKey() + " | Value: " + map.getValue());
@@ -62,9 +65,9 @@ public class HistoryActivity extends AppCompatActivity
             }
             Log.i(TAG, "Keyword array: " + Arrays.toString(keyWord));
             Log.i(TAG, "Value array: " + Arrays.toString(value));
-            viewAdapter = new HistoryViewAdapter(hashMap, this, this);
-            recyclerView.setAdapter(viewAdapter);
-
+            recyclerView.setAdapter(new HistoryViewAdapter(hashMap, this));
+        } else {
+            tvNoHistory.setVisibility(View.VISIBLE);
         }
     }
 
@@ -86,10 +89,12 @@ public class HistoryActivity extends AppCompatActivity
 
     @Override
     public void onItemClicked(int position) {
-    }
-
-
-    @Override
-    public void onItemLongCLick(int position) {
+        // Get the key word and value of the clicked card and store it in a preference.
+        // This is so that the word can be displayed in the OccurrencesFragment
+        SharedPreferences keyWordPref = getSharedPreferences(getString(R.string.pref_keyword), MODE_PRIVATE);
+        SharedPreferences numOccurrences = getSharedPreferences(getString(R.string.pref_num_occurrences), MODE_PRIVATE);
+        keyWordPref.edit().putString(getString(R.string.pref_keyword), keyWord[position]).apply();
+        numOccurrences.edit().putInt(getString(R.string.pref_num_occurrences), value[position]).apply();
+        finish();
     }
 }

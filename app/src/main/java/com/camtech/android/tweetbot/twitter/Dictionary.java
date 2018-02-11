@@ -1,4 +1,4 @@
-package com.camtech.android.tweetbot.utils;
+package com.camtech.android.tweetbot.twitter;
 
 /**
  * A dictionary containing quotes and auto responses

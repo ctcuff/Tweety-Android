@@ -10,10 +10,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.camtech.android.tweetbot.utils.TwitterUtils;
+import com.camtech.android.tweetbot.twitter.TwitterUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,16 +28,13 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
     private String[] keyWord;
     private int[] value;
     private ClickListener clickListener;
-    private LongClickListener longClickListener;
     private HashMap<String, Integer> hashMap;
     private TwitterUtils utils;
 
-    public HistoryViewAdapter(HashMap<String, Integer> hashMap,
-                              ClickListener clickListener, LongClickListener longClickListener) {
+    public HistoryViewAdapter(HashMap<String, Integer> hashMap, ClickListener clickListener) {
 
         this.hashMap = hashMap;
         this.clickListener = clickListener;
-        this.longClickListener = longClickListener;
 
         if (hashMap != null) {
             keyWord = new String[hashMap.entrySet().size()];
@@ -76,6 +72,7 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
     }
 
     private void removeCard(int position) {
+        //Remove the selected card making sure to re-save the HashMap
         hashMap.remove(keyWord[position], value[position]);
         utils.saveHashMap(hashMap);
         notifyItemRemoved(position);
@@ -95,16 +92,11 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
         void onItemClicked(int position);
     }
 
-    public interface LongClickListener {
-        void onItemLongCLick(int position);
-    }
-
-    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         TextView tvKeyword;
         TextView tvValue;
         CardView cardView;
         ImageView icDelete;
-        LinearLayout linearLayout;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -112,32 +104,19 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
             tvValue = itemView.findViewById(R.id.tv_num_occurrences);
             cardView = itemView.findViewById(R.id.card_view);
             icDelete = itemView.findViewById(R.id.ic_delete);
-
-            linearLayout = itemView.findViewById(R.id.linear_layout);
-
             cardView.setOnClickListener(this);
-            cardView.setOnLongClickListener(this);
             icDelete.setOnClickListener(v -> {
-
                 AlertDialog.Builder builder = new AlertDialog.Builder(itemView.getContext());
                 builder.setTitle("Delete Keyword");
                 builder.setMessage("Are you sure you want to delete this word?");
                 builder.setPositiveButton("OK", ((dialog, which) -> removeCard(getAdapterPosition())));
                 builder.setNegativeButton("CANCEL", ((dialog, which) -> dialog.dismiss())).create().show();
-
             });
-
         }
 
         @Override
         public void onClick(View v) {
             clickListener.onItemClicked(getAdapterPosition());
-        }
-
-        @Override
-        public boolean onLongClick(View v) {
-            longClickListener.onItemLongCLick(getAdapterPosition());
-            return true;
         }
     }
 }

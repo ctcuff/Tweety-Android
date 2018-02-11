@@ -1,4 +1,4 @@
-package com.camtech.android.tweetbot.utils;
+package com.camtech.android.tweetbot.twitter;
 
 import android.app.NotificationManager;
 import android.content.Context;
@@ -26,10 +26,10 @@ import twitter4j.User;
 import twitter4j.UserList;
 import twitter4j.UserStreamListener;
 
-import static com.camtech.android.tweetbot.utils.Dictionary.botGreetings;
-import static com.camtech.android.tweetbot.utils.Dictionary.misunderstandings;
-import static com.camtech.android.tweetbot.utils.Dictionary.quotes;
-import static com.camtech.android.tweetbot.utils.Dictionary.userGreetings;
+import static com.camtech.android.tweetbot.twitter.Dictionary.botGreetings;
+import static com.camtech.android.tweetbot.twitter.Dictionary.misunderstandings;
+import static com.camtech.android.tweetbot.twitter.Dictionary.quotes;
+import static com.camtech.android.tweetbot.twitter.Dictionary.userGreetings;
 
 public class StreamListener implements UserStreamListener {
 
@@ -59,7 +59,7 @@ public class StreamListener implements UserStreamListener {
         // Intent to update the text in Occurrences/Messages fragment
         intentUpdateUI = new Intent(OCCURRENCES_BROADCAST);
 
-        utils = new TwitterUtils(context, twitter);
+        utils = new TwitterUtils(twitter);
 
         HashMap<String, Integer> hashMap = utils.getHashMap();
         if (hashMap != null && utils.doesWordExist(keyWord)) {
@@ -74,7 +74,7 @@ public class StreamListener implements UserStreamListener {
     StreamListener(Context context, Twitter twitter) {
         this.context = context;
         this.twitter = twitter;
-        utils = new TwitterUtils(context, twitter);
+        utils = new TwitterUtils(twitter);
     }
 
     public void onDeletionNotice(long l, long l1) {
@@ -260,44 +260,48 @@ public class StreamListener implements UserStreamListener {
         Log.i(TAG, "STALLING, " + stallWarning.getMessage());
     }
 
-    public void onException(Exception e) {
-        // Error 402 occurs when there are too many auth
-        // requests in a short amount of time
+    public void onException(Exception error) {
+        Log.i(TAG, "onException... Stopping service");
+        context.stopService(new Intent(context, TwitterService.class));
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         AudioManager audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Exception")
-                .setStyle(new NotificationCompat.BigTextStyle());
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Exception");
 
-        Log.i(TAG, "onException... Stopping service");
-        context.stopService(new Intent(context, TwitterService.class));
+        builder.setStyle(new NotificationCompat.BigTextStyle());
 
         builder.setSmallIcon(R.drawable.ic_stat_message);
-        builder.setContentTitle("Stream Error");
+        builder.setContentTitle("TwitterStream");
         builder.setColor(context.getColor(R.color.colorNotificationError));
         builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
-        if (e.getLocalizedMessage().contains("420")) {
-            builder.setContentText("Error " + e.getLocalizedMessage()
-                    + "\n\nPlease wait 30 seconds before trying again");
-        } else {
-            builder.setContentText("Error " + e.getLocalizedMessage());
-        }
 
-        // Don't vibrate if the user's device is on silent
-        if (audio != null) {
-            switch (audio.getRingerMode()) {
-                case AudioManager.RINGER_MODE_NORMAL:
-                case AudioManager.RINGER_MODE_VIBRATE:
-                    builder.setVibrate(new long[]{0, 200, 200, 200});
-                    break;
-                case AudioManager.RINGER_MODE_SILENT:
-                    builder.setVibrate(new long[]{0});
-                    break;
+        // If there's no mobile data, we want to only show
+        // the notification in the TwitterService
+        if (!error.getMessage().contains("Unable to resolve host")) {
+            // Error 402 occurs when there are too many auth
+            // requests in a short amount of time
+            if (error.getMessage().contains("420")) {
+                builder.setContentText("Error " + error.getMessage() + "\n\nPlease wait 30 seconds before trying again");
+            } else {
+                builder.setContentText("Error " + error.getMessage());
+            }
+            // Don't vibrate if the user's device is on silent
+            if (audio != null) {
+                switch (audio.getRingerMode()) {
+                    case AudioManager.RINGER_MODE_NORMAL:
+                    case AudioManager.RINGER_MODE_VIBRATE:
+                        builder.setVibrate(new long[]{0, 200, 200, 200});
+                        break;
+                    case AudioManager.RINGER_MODE_SILENT:
+                        builder.setVibrate(new long[]{0});
+                        break;
+                }
+            }
+            if (manager != null) {
+                manager.notify(2, builder.build());
             }
         }
-        if (manager != null) {
-            manager.notify(2, builder.build());
-        }
+
     }
 }

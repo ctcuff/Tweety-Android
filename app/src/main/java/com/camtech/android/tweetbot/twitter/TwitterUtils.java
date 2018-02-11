@@ -1,6 +1,5 @@
-package com.camtech.android.tweetbot.utils;
+package com.camtech.android.tweetbot.twitter;
 
-import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
@@ -29,15 +28,15 @@ import twitter4j.conf.ConfigurationBuilder;
 public class TwitterUtils {
     private Twitter twitter;
     private static final int DELAY = 1000;
-    private Context context;
     private static final String TAG = TwitterUtils.class.getSimpleName();
     private HashMap<String, Integer> hashMap;
+    private final String FILE_NAME = "Occurrences.dat";
+    private final String FOLDER_NAME = "TweetData";
 
     public TwitterUtils() {
     }
 
-    public TwitterUtils(Context context, Twitter twitter) {
-        this.context = context;
+    public TwitterUtils(Twitter twitter) {
         this.twitter = twitter;
     }
 
@@ -135,7 +134,7 @@ public class TwitterUtils {
      * to the file.
      * */
     public void saveHashMap(String keyWord, int numOccurrences) {
-        String path = Environment.getExternalStorageDirectory().toString() + /*This is the new folder created -->*/ "/TweetData";
+        String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME;
         File folder = new File(path);
         if (!folder.mkdir()) {
             Log.i(TAG, "saveState: folder already exists");
@@ -143,7 +142,7 @@ public class TwitterUtils {
             Log.i(TAG, "saveState: folder created");
         }
 
-        File file = new File(folder, "Occurrences.ser");
+        File file = new File(folder, FILE_NAME);
         if (file.exists()) {
             // If the HashMap already exists, retrieve it from storage
             // and add the keyword/number of occurrences
@@ -172,14 +171,14 @@ public class TwitterUtils {
      * a single key value pair
      * */
     public void saveHashMap(HashMap<String, Integer> map) {
-        String path = Environment.getExternalStorageDirectory().toString() + /*This is the new folder created -->*/ "/TweetData";
+        String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME;
         File folder = new File(path);
         if (!folder.mkdir()) {
             Log.i(TAG, "saveState: folder already exists");
         } else {
             Log.i(TAG, "saveState: folder created");
         }
-        File file = new File(folder, "Occurrences.ser");
+        File file = new File(folder, FILE_NAME);
         if (file.exists()) {
             try {
                 // Write the HashMap to Occurrences.ser
@@ -203,14 +202,13 @@ public class TwitterUtils {
      * */
     public HashMap<String, Integer> getHashMap() {
         // This is where the map is saved
-        String path = Environment.getExternalStorageDirectory().toString() + "/TweetData/Occurrences.ser";
+        String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME + "/" + FILE_NAME;
         try {
             // Get the saved HashMap if it exists
             FileInputStream fileInputStream = new FileInputStream(path);
             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
             return (HashMap<String, Integer>) objectInputStream.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
             return null;
         }
     }
@@ -220,7 +218,7 @@ public class TwitterUtils {
      * within the HashMap
      * */
     public boolean doesWordExist(String keyWord) {
-        String path = Environment.getExternalStorageDirectory().toString() + "/TweetData/Occurrences.ser";
+        String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME + "/" + FILE_NAME;
         try {
             // Check to see if the word exists in the HashMap file
             FileInputStream fileInputStream = new FileInputStream(path);
@@ -232,8 +230,7 @@ public class TwitterUtils {
                     return true;
                 }
             }
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+        } catch (IOException | ClassNotFoundException ignored) {
         }
         return false;
     }

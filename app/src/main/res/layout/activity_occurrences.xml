@@ -26,7 +26,7 @@
         android:maxLines="1"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
-        android:text="@string/keyword"
+        android:text="@string/tv_keyword"
         tools:text="KeyWord: Kendrick Lamar"/>
 
     <ImageView
