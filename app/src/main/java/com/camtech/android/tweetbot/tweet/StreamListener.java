@@ -41,14 +41,16 @@ public class StreamListener implements UserStreamListener {
     private TwitterUtils utils;
     private int wordCount;
     private Context context;
-    // The number of strings in the arrays
-    private final int NUM_QUOTES = quotes.length;
-    private static final int NUM_GREETING = Dictionary.botGreetings.length;
-    private static final int NUM_MISUNDERSTANDINGS = misunderstandings.length;
-    public static final String OCCURRENCES_BROADCAST = "occurrences";
     private Intent intentUpdateUI;
     private String keyWord;
     private String botScreenName;
+    public static final String OCCURRENCES_BROADCAST = "occurrences";
+
+    private final int NUM_QUOTES = quotes.length;
+    private final int NUM_GREETING = botGreetings.length;
+    private final int NUM_MISUNDERSTANDINGS = misunderstandings.length;
+
+
 
     /**
      * Public constructor used to show the occurrences of a given word.
@@ -59,11 +61,9 @@ public class StreamListener implements UserStreamListener {
         this.context = context;
         this.twitter = twitter;
 
-        // Intent to update the text in Occurrences/Messages fragment
-        intentUpdateUI = new Intent(OCCURRENCES_BROADCAST);
-
-        utils = new TwitterUtils(twitter);
-
+        // Check to see if the key word is new. If it is,
+        // set the number of occurrences to 0. If it's not, get
+        // the value from the saved HashMap.
         HashMap<String, Integer> hashMap = utils.getHashMap();
         if (hashMap != null && utils.doesWordExist(keyWord)) {
             wordCount = hashMap.get(keyWord);
@@ -72,6 +72,10 @@ public class StreamListener implements UserStreamListener {
             this.keyWord = keyWord;
         }
 
+        // Intent to update the text in Occurrences/Messages fragment
+        intentUpdateUI = new Intent(OCCURRENCES_BROADCAST);
+
+        utils = new TwitterUtils(twitter);
     }
 
     StreamListener(Context context, Twitter twitter) {
@@ -138,7 +142,7 @@ public class StreamListener implements UserStreamListener {
         if (!sentByBot && !wasGoogleSearch) {
             String sender = directMessage.getSenderScreenName();
             Log.i(TAG, "Message from @" + sender + ": " + message);
-            // Check the message and response
+            // Check the message and respond accordingly
             if (wantsQuote) {
                 utils.sendMessage(sender, quotes[new Random().nextInt(NUM_QUOTES)]);
             } else if (wasGreeting) {
