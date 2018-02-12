@@ -36,7 +36,7 @@ public class TwitterUtils {
     public TwitterUtils() {
     }
 
-    public TwitterUtils(Twitter twitter) {
+     public TwitterUtils(Twitter twitter) {
         this.twitter = twitter;
     }
 
@@ -45,20 +45,14 @@ public class TwitterUtils {
      * This MUST be called before a Twitter object is
      * passed into the constructor.
      */
-    public static TwitterFactory setUpBot() {
-        ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.setDebugEnabled(true)
-                .setOAuthConsumerKey(Keys.CONSUMER_KEY)
-                .setOAuthConsumerSecret(Keys.CONSUMER_KEY_SECRET)
-                .setOAuthAccessToken(Keys.ACCESS_TOKEN)
-                .setOAuthAccessTokenSecret(Keys.ACCESS_TOKEN_SECRET);
-        return new TwitterFactory(cb.build());
+    public static Twitter setUpTwitter() {
+        return new TwitterFactory(getConfig()).getInstance();
     }
 
     /**
      * Helper method to build the configuration
      */
-    public static Configuration setUpConfig() {
+    public static Configuration getConfig() {
         ConfigurationBuilder cb = new ConfigurationBuilder();
         cb.setDebugEnabled(true)
                 .setOAuthConsumerKey(Keys.CONSUMER_KEY)
@@ -75,12 +69,14 @@ public class TwitterUtils {
         } catch (TwitterException e) {
             e.printStackTrace();
         }
-
         if (status != null) {
             Log.v(TAG, "Successfully updated the status to:\n" + status.getText());
         }
     }
 
+    /**
+     * Sends a message to the specified user using the users screen name
+     * */
     public void sendMessage(String user, String message) {
         try {
             DirectMessage directMessage = twitter.sendDirectMessage(user, message);
@@ -93,6 +89,9 @@ public class TwitterUtils {
         }
     }
 
+    /**
+     * Sends a message to the specified user using the users id
+     * */
     public void sendMessage(long user, String message) {
         try {
             DirectMessage directMessage = twitter.sendDirectMessage(user, message);

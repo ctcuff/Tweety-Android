@@ -72,8 +72,8 @@ public class TwitterService extends Service {
         keywordPref = getSharedPreferences(getString(R.string.pref_keyword), MODE_PRIVATE);
         keyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
 
-        Twitter twitter = TwitterUtils.setUpBot().getInstance();
-        twitterStream = new TwitterStreamFactory(TwitterUtils.setUpConfig()).getInstance();
+        Twitter twitter = TwitterUtils.setUpTwitter();
+        twitterStream = new TwitterStreamFactory(TwitterUtils.getConfig()).getInstance();
 
         if (mode != null && mode.equals("Occurrences")) {
             // Used to listen for a specific word or phrase

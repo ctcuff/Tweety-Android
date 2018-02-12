@@ -121,7 +121,7 @@ public class MessageFragment extends Fragment {
         @Override
         protected String doInBackground(Void... voids) {
             try {
-                userName = TwitterUtils.setUpBot().getInstance().getScreenName();
+                userName = TwitterUtils.setUpTwitter().getScreenName();
             } catch (TwitterException e) {
                 e.printStackTrace();
             }
