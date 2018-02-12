@@ -1,10 +1,12 @@
 package com.camtech.android.tweetbot.tweet;
 
+import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.icu.text.SimpleDateFormat;
 import android.media.AudioManager;
+import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -46,6 +48,7 @@ public class StreamListener implements UserStreamListener {
     public static final String OCCURRENCES_BROADCAST = "occurrences";
     private Intent intentUpdateUI;
     private String keyWord;
+    private String botScreenName;
 
     /**
      * Public constructor used to show the occurrences of a given word.
@@ -72,6 +75,7 @@ public class StreamListener implements UserStreamListener {
     }
 
     StreamListener(Context context, Twitter twitter) {
+        new ConnectionUtils().execute();
         this.context = context;
         this.twitter = twitter;
         utils = new TwitterUtils(twitter);
@@ -121,7 +125,7 @@ public class StreamListener implements UserStreamListener {
     public void onDirectMessage(DirectMessage directMessage) {
         List<String> list = Arrays.asList(userGreetings);
         String message = directMessage.getText().toLowerCase().trim();
-        boolean sentByBot = directMessage.getSenderScreenName().equalsIgnoreCase("camstweetbot");
+        boolean sentByBot = directMessage.getSenderScreenName().equalsIgnoreCase(botScreenName);
         boolean wasGreeting = list.stream().anyMatch(message::contains);
         boolean wantsQuote = message.contains("quote");
         boolean wantsJoke = message.contains("joke");
@@ -303,5 +307,29 @@ public class StreamListener implements UserStreamListener {
             }
         }
 
+    }
+    /**
+     * AsyncTask to load the username of the bot. This is so that
+     * the username will update if the bots username ever changes.
+     * */
+    @SuppressLint("StaticFieldLeak")
+    public class ConnectionUtils extends AsyncTask<Void, Void, String> {
+        String userName;
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            try {
+                userName = TwitterUtils.setUpTwitter().getScreenName();
+            } catch (TwitterException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            botScreenName = userName;
+            Log.i(TAG, "onPostExecute: @" + botScreenName);
+        }
     }
 }
