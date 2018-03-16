@@ -8,3 +8,5 @@ functions such as update its status.
 
 # Sample Twitter Conversation
 <img src="https://user-images.githubusercontent.com/7400747/36080683-99858286-0f61-11e8-8892-94e6339eb9f8.jpg" width="250">
+
+[Check out the Twitter4j library here](http://twitter4j.org/en/index.html)
