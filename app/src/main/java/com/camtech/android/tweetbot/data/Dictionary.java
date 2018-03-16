@@ -1,13 +1,13 @@
-package com.camtech.android.tweetbot.tweet;
+package com.camtech.android.tweetbot.data;
 
 /**
  * A dictionary containing quotes and auto responses
  * based on keywords or phrases
  */
 
-class Dictionary {
+public class Dictionary {
 
-    static String[] quotes = {
+    public static String[] quotes = {
 
             "We are what we repeatedly do. Excellence, therefore, is not an act but a habit.\n– Aristotle",
 
@@ -247,9 +247,9 @@ class Dictionary {
             "Adversity introduces a man to himself.\n– Author Unknown"
     };
 
-    // THE BOT SEND THESE
+    // THE BOT SENDS THESE
     // A list of greet responses to send to the user
-    static String[] botGreetings = {
+    public static String[] botGreetings = {
             "Hello!",
             "Hello there.",
             "Hi, how are you today?",
@@ -258,7 +258,7 @@ class Dictionary {
     };
 
     // A list of responses that trigger the sending of a bot greeting
-    static String[] userGreetings = {
+    public static String[] userGreetings = {
             "hi",
             "hello",
             "hola",
@@ -273,7 +273,7 @@ class Dictionary {
             "aloha",
     };
 
-    static String[] misunderstandings = {
+    public static String[] misunderstandings = {
             "I'm sorry, I did't understand. Maybe I will in the future...",
             "I'm sorry, I didn't quite get that",
             "Sorry, but I'm limited on what I can understand",
@@ -282,6 +282,6 @@ class Dictionary {
             "I didn't quite catch that",
     };
 
-    static String[] jokes = {};
+    public static String[] jokes = {};
 }
 

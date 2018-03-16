@@ -3,6 +3,8 @@ package com.camtech.android.tweetbot.tweet;
 import android.os.Environment;
 import android.util.Log;
 
+import com.camtech.android.tweetbot.data.Keys;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,11 +12,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import twitter4j.DirectMessage;
-import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
@@ -24,19 +24,23 @@ import twitter4j.conf.ConfigurationBuilder;
 /**
  * Contains various helper methods.
  */
-
 public class TwitterUtils {
     private Twitter twitter;
     private static final int DELAY = 1000;
-    private static final String TAG = TwitterUtils.class.getSimpleName();
+    private final String TAG = TwitterUtils.class.getSimpleName();
     private HashMap<String, Integer> hashMap;
     private final String FILE_NAME = "Occurrences.dat";
     private final String FOLDER_NAME = "TweetData";
 
+    // Will open to the twitter website
+    public static final String BASE_TWITTER_URL = "https://twitter.com/";
+    // Will open in the twitter app
+    public static final String BASE_TWITTER_URI = "twitter://user?screen_name=";
+
     public TwitterUtils() {
     }
 
-     public TwitterUtils(Twitter twitter) {
+    public TwitterUtils(Twitter twitter) {
         this.twitter = twitter;
     }
 
@@ -62,21 +66,9 @@ public class TwitterUtils {
         return cb.build();
     }
 
-    public void updateStatus(String message) {
-        Status status = null;
-        try {
-            status = twitter.updateStatus(message);
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-        if (status != null) {
-            Log.v(TAG, "Successfully updated the status to:\n" + status.getText());
-        }
-    }
-
     /**
      * Sends a message to the specified user using the users screen name
-     * */
+     */
     public void sendMessage(String user, String message) {
         try {
             DirectMessage directMessage = twitter.sendDirectMessage(user, message);
@@ -90,48 +82,16 @@ public class TwitterUtils {
     }
 
     /**
-     * Sends a message to the specified user using the users id
-     * */
-    public void sendMessage(long user, String message) {
-        try {
-            DirectMessage directMessage = twitter.sendDirectMessage(user, message);
-            Log.v(TAG, "-----------------------------------");
-            Log.v(TAG, "Sent:\n" + message + "\nTo @" + directMessage.getRecipientScreenName());
-            Log.v(TAG, "-----------------------------------");
-        } catch (TwitterException e) {
-            Log.v(TAG, "Error sending message\n" + e.getMessage());
-        }
-    }
-
-    public void getTimeline() {
-        List<Status> statuses = null;
-        try {
-            statuses = twitter.getHomeTimeline();
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-        Log.v(TAG, "Showing home timeline.");
-        if (statuses != null) {
-            for (Status status : statuses) {
-                Log.v(TAG, status.getUser().getName() + ": " + status.getText());
-            }
-        }
-    }
-
-    public void sleep(long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * Utility function to save the keyword and its number of
      * occurrences into a HashMap. Note that only one file is ever
      * created, so every time data is saved, the data is appended
      * to the file.
-     * */
+     *
+     * @param keyWord        The word to be saved to the hash map. This value
+     *                       should always be paired with it's number of occurrences
+     * @param numOccurrences The number of occurrences for the given word. The should
+     *                       again match with the keyword
+     */
     public void saveHashMap(String keyWord, int numOccurrences) {
         String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME;
         File folder = new File(path);
@@ -153,13 +113,12 @@ public class TwitterUtils {
             hashMap.put(keyWord, numOccurrences);
         }
         try {
-            // Write the HashMap to Occurrences.ser
+            // Write the HashMap to Occurrences.dat
             ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(file));
             outputStream.writeObject(hashMap);
             outputStream.flush();
             outputStream.close();
             Log.i(TAG, "saveState: File saved to " + file.getPath());
-            Log.i(TAG, "saveHashMap: " + hashMap.toString());
         } catch (IOException e) {
             Log.i(TAG, "saveState... error saving", e);
         }
@@ -168,7 +127,7 @@ public class TwitterUtils {
     /**
      * Used to save an entire HashMap instead of
      * a single key value pair
-     * */
+     */
     public void saveHashMap(HashMap<String, Integer> map) {
         String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME;
         File folder = new File(path);
@@ -186,19 +145,17 @@ public class TwitterUtils {
                 outputStream.flush();
                 outputStream.close();
                 Log.i(TAG, "saveState: File saved to " + file.getPath());
-                Log.i(TAG, "saveHashMap: " + map.toString());
             } catch (IOException e) {
                 Log.i(TAG, "saveState... error saving", e);
             }
         } else {
             Log.i(TAG, "saveHashMap: FILE NOT SAVED");
         }
-
     }
 
     /**
      * Returns the HashMap from storage if it exists.
-     * */
+     */
     public HashMap<String, Integer> getHashMap() {
         // This is where the map is saved
         String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME + "/" + FILE_NAME;
@@ -215,7 +172,7 @@ public class TwitterUtils {
     /**
      * Check to see if the given word exists
      * within the HashMap
-     * */
+     */
     public boolean doesWordExist(String keyWord) {
         String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME + "/" + FILE_NAME;
         try {
@@ -229,9 +186,17 @@ public class TwitterUtils {
                     return true;
                 }
             }
-        } catch (IOException | ClassNotFoundException ignored) {
+        } catch (IOException | ClassNotFoundException e) {
+            Log.i(TAG, "Error checking keyword", e);
         }
         return false;
     }
 
+    public void sleep(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }

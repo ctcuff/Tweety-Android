@@ -17,7 +17,7 @@
         android:layout_centerInParent="true"
         android:textSize="17sp"
         android:layout_below="@id/graph_icon"
-        android:text="Looks like you don't have any data to graph"/>
+        android:text="@string/empty_graph"/>
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/chart"

@@ -5,11 +5,12 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -18,15 +19,17 @@ import com.camtech.android.tweetbot.HistoryViewAdapter;
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class HistoryActivity extends AppCompatActivity implements HistoryViewAdapter.ClickListener {
 
-    private final String TAG = HistoryActivity.class.getSimpleName();
-    String[] keyWord;
-    int[] value;
+    private String[] keyWord;
+    private int[] value;
+    private HashMap<String, Integer> hashMap;
+    private TwitterUtils utils;
+    private HistoryViewAdapter viewAdapter;
+    private TextView tvNoHistory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +44,9 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         setTitle("History");
         toolbar.setTitleTextColor(Color.WHITE);
 
-        TextView tvNoHistory = findViewById(R.id.tv_no_history);
+        tvNoHistory = findViewById(R.id.tv_no_history);
 
-        TwitterUtils utils = new TwitterUtils();
+        utils = new TwitterUtils();
 
         RecyclerView recyclerView = findViewById(R.id.rv_occurrences);
         LinearLayoutManager manager = new LinearLayoutManager(this);
@@ -51,30 +54,40 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         recyclerView.setLayoutManager(manager);
         recyclerView.setHasFixedSize(true);
 
-        HashMap<String, Integer> hashMap = utils.getHashMap();
+        // Get the stored HashMap from memory if it exists
+        hashMap = utils.getHashMap();
         if (hashMap != null && !hashMap.isEmpty()) {
             tvNoHistory.setVisibility(View.GONE);
             keyWord = new String[hashMap.entrySet().size()];
             value = new int[hashMap.keySet().size()];
             int index = 0;
             for (Map.Entry<String, Integer> map : hashMap.entrySet()) {
-                Log.i(TAG, "Keyword: " + map.getKey() + " | Value: " + map.getValue());
                 keyWord[index] = map.getKey();
                 value[index] = map.getValue();
                 index++;
             }
-            Log.i(TAG, "Keyword array: " + Arrays.toString(keyWord));
-            Log.i(TAG, "Value array: " + Arrays.toString(value));
-            recyclerView.setAdapter(new HistoryViewAdapter(hashMap, this));
+            viewAdapter = new HistoryViewAdapter(this, hashMap, this);
+            recyclerView.setAdapter(viewAdapter);
         } else {
             tvNoHistory.setVisibility(View.VISIBLE);
         }
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_history, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                break;
+            case R.id.clear_history:
+                clearHistory();
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -82,6 +95,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        // Start the GraphActivity when the device is rotated horizontally
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             startActivity(new Intent(this, GraphActivity.class));
         }
@@ -96,5 +110,20 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         keyWordPref.edit().putString(getString(R.string.pref_keyword), keyWord[position]).apply();
         numOccurrences.edit().putInt(getString(R.string.pref_num_occurrences), value[position]).apply();
         finish();
+    }
+
+    private void clearHistory() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        builder.setTitle("Clear History");
+        builder.setMessage("Are you want to clear your history? This can't be undone!");
+        builder.setPositiveButton("YES", (dialog, which) -> {
+            hashMap.clear();
+            utils.saveHashMap(hashMap);
+            viewAdapter.resetAdapter(hashMap);
+            tvNoHistory.setVisibility(View.VISIBLE);
+        });
+        builder.setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
+        builder.create().show();
     }
 }

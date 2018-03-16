@@ -4,10 +4,12 @@ import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.icu.text.SimpleDateFormat;
 import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.support.v4.app.NotificationCompat;
+import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import com.camtech.android.tweetbot.R;
@@ -28,11 +30,15 @@ import twitter4j.User;
 import twitter4j.UserList;
 import twitter4j.UserStreamListener;
 
-import static com.camtech.android.tweetbot.tweet.Dictionary.botGreetings;
-import static com.camtech.android.tweetbot.tweet.Dictionary.misunderstandings;
-import static com.camtech.android.tweetbot.tweet.Dictionary.quotes;
-import static com.camtech.android.tweetbot.tweet.Dictionary.userGreetings;
+import static com.camtech.android.tweetbot.data.Dictionary.botGreetings;
+import static com.camtech.android.tweetbot.data.Dictionary.misunderstandings;
+import static com.camtech.android.tweetbot.data.Dictionary.quotes;
+import static com.camtech.android.tweetbot.data.Dictionary.userGreetings;
 
+/**
+ * This is the core part of the app. It handles receiving tweets/messages
+ * from Twitter.
+ */
 public class StreamListener implements UserStreamListener {
 
     private static final String TAG = StreamListener.class.getSimpleName();
@@ -44,22 +50,28 @@ public class StreamListener implements UserStreamListener {
     private Intent intentUpdateUI;
     private String keyWord;
     private String botScreenName;
-    public static final String OCCURRENCES_BROADCAST = "occurrences";
+    private SharedPreferences sharedPreferences;
 
     private final int NUM_QUOTES = quotes.length;
     private final int NUM_GREETING = botGreetings.length;
     private final int NUM_MISUNDERSTANDINGS = misunderstandings.length;
 
-
+    public static final String LISTENER_BROADCAST = "occurrences";
+    public static final String NEW_TWEET_BROADCAST = "tweet";
+    public static final String NUM_OCCURRENCES_BROADCAST = "number";
 
     /**
-     * Public constructor used to show the occurrences of a given word.
+     * Constructor used to show the occurrences of a given word.
      * Mainly used in {@link #onStatus(Status)}
      */
     StreamListener(Context context, Twitter twitter, String keyWord) {
         Log.i(TAG, "Listening for occurrences of " + keyWord);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         this.context = context;
         this.twitter = twitter;
+        this.keyWord = keyWord;
+
+        utils = new TwitterUtils(twitter);
 
         // Check to see if the key word is new. If it is,
         // set the number of occurrences to 0. If it's not, get
@@ -69,16 +81,17 @@ public class StreamListener implements UserStreamListener {
             wordCount = hashMap.get(keyWord);
         } else {
             wordCount = 0;
-            this.keyWord = keyWord;
         }
-
         // Intent to update the text in Occurrences/Messages fragment
-        intentUpdateUI = new Intent(OCCURRENCES_BROADCAST);
-
-        utils = new TwitterUtils(twitter);
+        intentUpdateUI = new Intent(LISTENER_BROADCAST);
     }
 
+    /**
+     * Constructor used to listen for direct messages/status updates
+     */
     StreamListener(Context context, Twitter twitter) {
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
         new ConnectionUtils().execute();
         this.context = context;
         this.twitter = twitter;
@@ -161,7 +174,7 @@ public class StreamListener implements UserStreamListener {
             Log.i(TAG, "Message from @" + sender + ": " + message);
             // Split the sentence to store it in an array
             String[] searchQuery = message.split("\\s+");
-            // We only care about the words after 'for...'
+            // We only care about the words after 'for'
             String searchWord = searchQuery[searchQuery.length - 1];
             if (searchQuery.length == 4) {
                 // Handles a one word search, i.e.: 'Search Google for cats'
@@ -178,7 +191,6 @@ public class StreamListener implements UserStreamListener {
             }
         }
     }
-
 
     public void onUserListMemberAddition(User user, User user1, UserList userList) {
 
@@ -237,19 +249,55 @@ public class StreamListener implements UserStreamListener {
     }
 
     public void onStatus(Status status) {
-        wordCount++;
-        Log.d(TAG, "Occurrences of '" + keyWord + "': " + wordCount);
-        intentUpdateUI.putExtra("number", wordCount);
-        // Send the word count to the OccurrencesFragment so that the UI updates
-        context.sendBroadcast(intentUpdateUI);
 
         // This formats the date to appear as: Mon, February 5, 2018 01:27 AM
         SimpleDateFormat dateFormatter = new SimpleDateFormat("EEE, MMMM d, yyyy hh:mm aaa");
 
-        Log.d(TAG, "@" + status.getUser().getScreenName());
-        Log.d(TAG, "Created: " + dateFormatter.format(status.getCreatedAt()));
-        Log.d(TAG, status.getText() + "\n");
+        String date = dateFormatter.format(status.getCreatedAt());
+        String screenName = status.getUser().getScreenName();
+        String name = status.getUser().getName();
+        String message = status.getText();
+        String userProfilePic = status.getUser().getBiggerProfileImageURL();
+        String userDescription = status.getUser().getDescription();
 
+        // Check to see if the tweet is a re-tweet
+        boolean wasRetweet = message.startsWith("RT");
+        // Check to see if the tweet was in English
+        boolean isEnglish = status.getLang().equals("en");
+        // Load the boolean values from the checkbox preference in the settings fragment
+        boolean canShowRetweets = sharedPreferences.getBoolean(context.getString(R.string.pref_show_retweets_key),
+                context.getResources().getBoolean(R.bool.pref_show_retweets));
+        boolean restrictToEnglish = sharedPreferences.getBoolean(context.getString(R.string.pref_english_only_key),
+                context.getResources().getBoolean(R.bool.pref_english_only));
+
+        // Package the tweet into an intent so it can be sent via broadcast
+        intentUpdateUI.putExtra(NEW_TWEET_BROADCAST,
+                new Tweet(date, screenName, name, userDescription, userProfilePic, message, keyWord));
+
+        if (canShowRetweets && restrictToEnglish) {
+            if (isEnglish) broadcastTweet();
+        }
+
+        if (!canShowRetweets && restrictToEnglish) {
+            if (!wasRetweet && isEnglish) broadcastTweet();
+        }
+
+        if (!canShowRetweets && !restrictToEnglish) {
+            if (!wasRetweet) broadcastTweet();
+        }
+
+        if (canShowRetweets && !restrictToEnglish) {
+           broadcastTweet();
+        }
+
+    }
+
+    private void broadcastTweet() {
+        wordCount++;
+        // Send the word count to the fragments so that the UI updates
+        intentUpdateUI.putExtra(NUM_OCCURRENCES_BROADCAST, wordCount);
+        // Send the tweet received to the TweetPostedFragment
+        context.sendBroadcast(intentUpdateUI);
     }
 
     public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
@@ -257,7 +305,6 @@ public class StreamListener implements UserStreamListener {
     }
 
     public void onTrackLimitationNotice(int i) {
-        Log.i(TAG, "Limitation: " + i);
     }
 
     public void onScrubGeo(long l, long l1) {
@@ -269,7 +316,6 @@ public class StreamListener implements UserStreamListener {
     }
 
     public void onException(Exception error) {
-        Log.i(TAG, "onException... Stopping service");
         context.stopService(new Intent(context, TwitterService.class));
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -280,7 +326,7 @@ public class StreamListener implements UserStreamListener {
         builder.setStyle(new NotificationCompat.BigTextStyle());
 
         builder.setSmallIcon(R.drawable.ic_stat_message);
-        builder.setContentTitle("TwitterStream");
+        builder.setContentTitle(context.getString(R.string.notification_title));
         builder.setColor(context.getColor(R.color.colorNotificationError));
         builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
 
@@ -299,7 +345,7 @@ public class StreamListener implements UserStreamListener {
                 switch (audio.getRingerMode()) {
                     case AudioManager.RINGER_MODE_NORMAL:
                     case AudioManager.RINGER_MODE_VIBRATE:
-                        builder.setVibrate(new long[]{0, 200, 200, 200});
+                        builder.setVibrate(new long[]{0, 250, 250, 250});
                         break;
                     case AudioManager.RINGER_MODE_SILENT:
                         builder.setVibrate(new long[]{0});
@@ -310,12 +356,13 @@ public class StreamListener implements UserStreamListener {
                 manager.notify(2, builder.build());
             }
         }
-
+        Log.i(TAG, "onException: ", error);
     }
+
     /**
      * AsyncTask to load the username of the bot. This is so that
      * the username will update if the bots username ever changes.
-     * */
+     */
     @SuppressLint("StaticFieldLeak")
     public class ConnectionUtils extends AsyncTask<Void, Void, String> {
         String userName;
@@ -333,7 +380,6 @@ public class StreamListener implements UserStreamListener {
         @Override
         protected void onPostExecute(String s) {
             botScreenName = userName;
-            Log.i(TAG, "onPostExecute: @" + botScreenName);
         }
     }
 }

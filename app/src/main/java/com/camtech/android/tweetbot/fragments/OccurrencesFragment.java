@@ -1,6 +1,5 @@
 package com.camtech.android.tweetbot.fragments;
 
-import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
@@ -12,10 +11,10 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +26,7 @@ import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
+import com.camtech.android.tweetbot.activities.SettingsActivity;
 import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.tweet.TwitterService;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
@@ -34,31 +34,27 @@ import com.camtech.android.tweetbot.tweet.TwitterUtils;
 import twitter4j.Status;
 
 /**
- * Displays the number of occurrences of a given word
+ * Displays the number of occurrences of a given word.
+ * See {@link StreamListener#onStatus(Status)}
  */
 public class OccurrencesFragment extends Fragment {
 
-    private final String TAG = OccurrencesFragment.class.getSimpleName();
-    int numOccurrences;
-    String keyWord;
-    Button startStop;
-    SharedPreferences keywordPref;
-    SharedPreferences numOccurrencesPref;
-    TextView tvKeyword;
-    TextView tvNumOccurrences;
-    TwitterUtils utils;
-    AlertDialog dialog;
+    public static final String OCCURRENCES = "occurrences";
+    private int numOccurrences;
+    private String keyWord;
+    private Button startStop;
+    private SharedPreferences keywordPref;
+    private SharedPreferences numOccurrencesPref;
+    private TextView tvKeyword;
+    private TextView tvNumOccurrences;
+    private TwitterUtils utils;
+    private AlertDialog resetKeyWordDialog;
+    private AlertDialog resetOccurrencesDialog;
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Log.i(TAG, "onCreateView...");
-        View rootView = inflater.inflate(R.layout.activity_occurrences, container, false);
-
-        // Receiver to update tvNumOccurrences
-        getContext().registerReceiver(occurrencesReceiver, new IntentFilter(StreamListener.OCCURRENCES_BROADCAST));
-        // Receiver to make sure the button text updates
-        getContext().registerReceiver(updateButtonReceiver, new IntentFilter(TwitterService.BROADCAST_UPDATE));
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.occurrences_fragment, container, false);
 
         utils = new TwitterUtils();
 
@@ -71,10 +67,12 @@ public class OccurrencesFragment extends Fragment {
         startStop.setOnClickListener(v -> {
             vibrate(30);
             if (!isServiceRunning(TwitterService.class)) {
-                // Tell the service it was started through the occurrences fragment
+                // Tell the service it was started through the occurrences fragment.
+                // This way, it can determine which stream to start
                 Intent intent = new Intent(getContext(), TwitterService.class);
-                intent.putExtra(Intent.EXTRA_TEXT, "Occurrences");
+                intent.putExtra(Intent.EXTRA_TEXT, OCCURRENCES);
                 getContext().startService(intent);
+
             } else {
                 getContext().stopService(new Intent(getContext(), TwitterService.class));
             }
@@ -82,21 +80,22 @@ public class OccurrencesFragment extends Fragment {
 
         tvNumOccurrences = rootView.findViewById(R.id.tv_num_occurrences);
         tvNumOccurrences.setText(String.valueOf(numOccurrences));
-
-        tvNumOccurrences.setOnLongClickListener(v -> {
+        tvNumOccurrences.setOnClickListener(view -> {
             if (!isServiceRunning(TwitterService.class)) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                builder.setMessage("Are you sure you want to reset the counter for this word?")
-                        .setPositiveButton("YES", (dialog, which) -> {
-                            numOccurrencesPref.edit().putInt(getString(R.string.pref_num_occurrences), 0).apply();
-                            numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
-                            tvNumOccurrences.setText(String.valueOf(numOccurrences));
-                        })
-                        .setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss()).create().show();
+                builder.setMessage("Reset the counter for this word?");
+                builder.setPositiveButton("YES", (dialog, which) -> {
+                    numOccurrencesPref.edit().putInt(getString(R.string.pref_num_occurrences), 0).apply();
+                    numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
+                    tvNumOccurrences.setText(String.valueOf(numOccurrences));
+                    new TwitterUtils().saveHashMap(keyWord, 0);
+                });
+                builder.setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
+                resetOccurrencesDialog = builder.create();
+                resetOccurrencesDialog.show();
             } else {
                 Toast.makeText(getContext(), "Stop first to reset the counter", Toast.LENGTH_SHORT).show();
             }
-            return true;
         });
         tvKeyword = rootView.findViewById(R.id.tv_keyword);
         tvKeyword.setText(getString(R.string.tv_keyword, keyWord));
@@ -105,23 +104,35 @@ public class OccurrencesFragment extends Fragment {
             changeKeyword();
         });
 
-        ImageView graphImage = rootView.findViewById(R.id.ic_graph);
+        ImageView graphImage = rootView.findViewById(R.id.iv_graph);
         graphImage.setOnClickListener(v -> startActivity(new Intent(getContext(), HistoryActivity.class)));
+
+        ImageView settingsImage = rootView.findViewById(R.id.iv_settings);
+        settingsImage.setOnClickListener(v -> startActivity(new Intent(getContext(), SettingsActivity.class)));
 
         return rootView;
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onPause() {
+        super.onPause();
         getContext().unregisterReceiver(occurrencesReceiver);
         getContext().unregisterReceiver(updateButtonReceiver);
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
-        Log.i(TAG, "onResume...");
+        // Receiver to update tvNumOccurrences
+        getContext().registerReceiver(occurrencesReceiver, new IntentFilter(StreamListener.LISTENER_BROADCAST));
+        // Receiver to make sure the button text updates
+        getContext().registerReceiver(updateButtonReceiver, new IntentFilter(TwitterService.BROADCAST_UPDATE));
+
         // Since Android OS might stop the service in the background without cancelling
         // the notification, we need to check if the service is running when the app is
         // re-opened.
@@ -138,7 +149,7 @@ public class OccurrencesFragment extends Fragment {
         if (!utils.doesWordExist(keyWord)) {
             tvNumOccurrences.setText("0");
         } else {
-            // A card was clicked so we need to update the textviews
+            // A card was clicked so we need to update the text views
             // to that clicked word
             numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
             tvNumOccurrences.setText(String.valueOf(numOccurrences));
@@ -151,21 +162,23 @@ public class OccurrencesFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
-        Log.i(TAG, "onStop...");
         // Since AS gets mad about window leaks, we need to make sure
-        // the dialog is cancelled if the device is rotated, or some other
+        // any dialog is cancelled if the device is rotated, or some other
         // event occurs
-        if (dialog != null) {
-            dialog.dismiss();
+        if (resetKeyWordDialog != null) {
+            resetKeyWordDialog.dismiss();
+        }
+
+        if (resetOccurrencesDialog != null) {
+            resetOccurrencesDialog.dismiss();
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private void updateButtonText() {
         if (isServiceRunning(TwitterService.class)) {
-            startStop.setText("stop");
+            startStop.setText(R.string.button_stop);
         } else {
-            startStop.setText("start");
+            startStop.setText(R.string.button_start);
         }
     }
 
@@ -188,13 +201,14 @@ public class OccurrencesFragment extends Fragment {
     }
 
     private void changeKeyword() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+
         LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.change_keyword_dialog, getView().findViewById(R.id.dialog_layout));
 
         builder.setView(view);
 
-        final EditText changeKeyword = view.findViewById(R.id.et_change_keyword);
+        EditText changeKeyword = view.findViewById(R.id.et_change_keyword);
         builder.setCancelable(false);
         builder.setTitle("Change Keyword")
                 .setPositiveButton("OK", (dialog, which) -> {
@@ -203,10 +217,10 @@ public class OccurrencesFragment extends Fragment {
                 })
                 .setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
 
-        dialog = builder.create();
-        dialog.show();
+        resetKeyWordDialog = builder.create();
+        resetKeyWordDialog.show();
         // This makes sure the dialog only closes if the entered keyword is valid
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        resetKeyWordDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
 
             if (!TextUtils.isEmpty(changeKeyword.getText().toString().trim())) {
                 String keyWordFromTextView = changeKeyword.getText().toString().trim().toLowerCase();
@@ -234,13 +248,13 @@ public class OccurrencesFragment extends Fragment {
                     if (isServiceRunning(TwitterService.class)) {
                         getContext().stopService(new Intent(getContext(), TwitterService.class));
                     }
-                    dialog.dismiss();
+                    resetKeyWordDialog.dismiss();
                 }
                 if (keyWordFromTextView.equalsIgnoreCase("twitter")) {
                     Toast.makeText(getContext(), "Invalid Keyword", Toast.LENGTH_SHORT).show();
                 }
             }
-            dialog.dismiss();
+            resetKeyWordDialog.dismiss();
         });
     }
 
@@ -260,7 +274,8 @@ public class OccurrencesFragment extends Fragment {
     private BroadcastReceiver occurrencesReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            int wordCount = intent.getIntExtra("number", 0);
+            // Get the updated number of occurrences from the stream listener
+            int wordCount = intent.getIntExtra(StreamListener.NUM_OCCURRENCES_BROADCAST, 0);
             tvNumOccurrences.setText(String.valueOf(wordCount));
             numOccurrencesPref.edit().putInt(getString(R.string.pref_num_occurrences), wordCount).apply();
         }
@@ -269,14 +284,13 @@ public class OccurrencesFragment extends Fragment {
     private BroadcastReceiver updateButtonReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i(TAG, "onReceive...");
             updateButtonText();
         }
     };
 
     private void checkOrientation() {
-        // We need to change the width of the TV so that it can
-        // show longer strings
+        // We need to change the width of the text view so that it can
+        // show longer strings when rotated horizontally
         ViewGroup.LayoutParams params = tvKeyword.getLayoutParams();
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             params.width = getResources().getDimensionPixelSize(R.dimen.tv_keyword_portrait);

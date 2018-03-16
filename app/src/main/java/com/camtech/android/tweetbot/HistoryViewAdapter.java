@@ -1,17 +1,17 @@
 package com.camtech.android.tweetbot;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.camtech.android.tweetbot.activities.HistoryActivity;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
 
 import java.util.HashMap;
@@ -19,20 +19,19 @@ import java.util.Map;
 
 /**
  * Custom RecyclerView adapter used in
- * {@link com.camtech.android.tweetbot.activities.HistoryActivity}
+ * {@link HistoryActivity}
  */
 public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.ViewHolder> {
-
-    private final String TAG = HistoryViewAdapter.class.getSimpleName();
 
     private String[] keyWord;
     private int[] value;
     private ClickListener clickListener;
     private HashMap<String, Integer> hashMap;
     private TwitterUtils utils;
+    private Context context;
 
-    public HistoryViewAdapter(HashMap<String, Integer> hashMap, ClickListener clickListener) {
-
+    public HistoryViewAdapter(Context context, HashMap<String, Integer> hashMap, ClickListener clickListener) {
+        this.context = context;
         this.hashMap = hashMap;
         this.clickListener = clickListener;
 
@@ -49,34 +48,29 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
         utils = new TwitterUtils();
     }
 
+    @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Log.i(TAG, "onCreateViewHolder: ...");
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         Context context = parent.getContext();
-
         View view = LayoutInflater.from(context).inflate(R.layout.history_list_item, parent, false);
-
         return new ViewHolder(view);
     }
 
-    @SuppressLint("SetTextI18n")
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        holder.tvKeyword.setText("Keyword: " + keyWord[position]);
-        holder.tvValue.setText("Occurrences: " + value[position]);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        holder.tvKeyword.setText(context.getString(R.string.history_keyword, keyWord[position]));
+        holder.tvValue.setText(context.getString(R.string.history_num_occurrences, value[position]));
     }
 
     @Override
     public int getItemCount() {
-        return (keyWord.length + value.length) / 2;
+        return hashMap.size();
     }
 
     private void removeCard(int position) {
         //Remove the selected card making sure to re-save the HashMap
         hashMap.remove(keyWord[position], value[position]);
         utils.saveHashMap(hashMap);
-        notifyItemRemoved(position);
-        notifyItemChanged(position, hashMap.size());
 
         keyWord = new String[hashMap.entrySet().size()];
         value = new int[hashMap.keySet().size()];
@@ -86,6 +80,14 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
             value[index] = map.getValue();
             index++;
         }
+
+        notifyItemRemoved(position);
+        notifyItemChanged(position, hashMap.size());
+    }
+
+    public void resetAdapter(HashMap<String, Integer> hashmap) {
+        this.hashMap = hashmap;
+        notifyDataSetChanged();
     }
 
     public interface ClickListener {
@@ -108,7 +110,7 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
             icDelete.setOnClickListener(v -> {
                 AlertDialog.Builder builder = new AlertDialog.Builder(itemView.getContext());
                 builder.setTitle("Delete Keyword");
-                builder.setMessage("Are you sure you want to delete this word?");
+                builder.setMessage("Are you sure you want to delete this word ?");
                 builder.setPositiveButton("OK", ((dialog, which) -> removeCard(getAdapterPosition())));
                 builder.setNegativeButton("CANCEL", ((dialog, which) -> dialog.dismiss())).create().show();
             });

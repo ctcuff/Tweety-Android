@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Status Filters" />
+
+    <CheckBoxPreference
+        android:defaultValue="@bool/pref_show_retweets"
+        android:key="@string/pref_show_retweets_key"
+        android:summaryOff="@string/pref_show_rt_false"
+        android:summaryOn="@string/pref_show_rt_true"
+        android:title="@string/pref_show_retweets_label" />
+
+    <CheckBoxPreference
+        android:defaultValue="@bool/pref_english_only"
+        android:key="@string/pref_english_only_key"
+        android:summaryOff="@string/pref_english_only_false"
+        android:summaryOn="@string/pref_english_only_true"
+        android:title="@string/pref_english_only_label" />
+
+</PreferenceScreen>

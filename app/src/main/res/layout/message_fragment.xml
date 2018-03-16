@@ -20,14 +20,6 @@
         android:layout_marginTop="16dp"
         tools:text="\@CamsTweetBot"/>
 
-    <ImageView
-        android:id="@+id/ic_settings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="8dp"
-        android:src="@drawable/ic_settings" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -39,7 +31,7 @@
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
             android:textSize="40sp"
-            android:text="Tweet Bot"/>
+            android:text="@string/messaging"/>
 
         <TextView
             android:id="@+id/tv_running_status"
@@ -59,6 +51,6 @@
         android:textColor="#FFFFFF"
         android:layout_alignParentBottom="true"
         android:layout_margin="16dp"
-        android:text="Start" />
+        android:text="@string/button_start" />
 
 </RelativeLayout>

@@ -12,4 +12,42 @@
     <string name="pref_keyword">prefKeyword</string>
     <string name="pref_num_occurrences">prefOccurrences</string>
     <string name="pref_default_keyword">hello world</string>
+    <string name="status_user">\@%s</string>
+    <string name="button_stop">stop</string>
+    <string name="button_start">start</string>
+    <string name="clear_history">clear</string>
+    <string name="username_loading">Loading…</string>
+    <string name="status_running">Running</string>
+    <string name="notification_stream_message">Stream connected, listening for messages. Touch to stop</string>
+    <string name="notification_stream_occurrences">
+        Stream connected. Listening for occurrences of \"%s\". Touch to stop
+    </string>
+    <string name="notification_title">TwitterStream</string>
+
+    <string name="filler_text">
+        Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.
+        Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+        Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim.
+        Donec pede justo, fringilla vel, aliquet nec, vulputate
+    </string>
+
+    <string name="history_keyword">Keyword: %s</string>
+    <string name="history_num_occurrences">Occurrences: %d</string>
+
+    <string name="pref_show_retweets_key">show_retweets</string>
+    <string name="pref_show_retweets_label">Show Retweets</string>
+    <string name="pref_show_rt_true">Retweets will be included</string>
+    <string name="pref_show_rt_false">Retweets will be excluded</string>
+
+    <string name="pref_english_only_key">english_only</string>
+    <string name="pref_english_only_label">Restrict to English</string>
+    <string name="pref_english_only_true">Only English statuses will be shown</string>
+    <string name="pref_english_only_false">Statuses will be shown in any language</string>
+    <string name="recycler_view_empty">No tweets yet</string>
+    <string name="empty_graph">Looks like you don\'t have any data to graph</string>
+    <string name="empty_history">Looks like you don\'t have any data</string>
+    <string name="view_profile">View Profile</string>
+    <string name="dialog_keyword_hint">Keyword</string>
+    <string name="messaging">Messaging</string>
+    <string name="occurrences">Occurrences</string>
 </resources>

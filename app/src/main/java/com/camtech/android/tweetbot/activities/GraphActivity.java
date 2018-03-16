@@ -28,8 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GraphActivity extends AppCompatActivity {
-    private final String TAG = GraphActivity.class.getSimpleName();
-    final float TEXT_SIZE = 14f;
+
+    private final float TEXT_SIZE = 14f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,12 +61,17 @@ public class GraphActivity extends AppCompatActivity {
             emptyGraphImage.setVisibility(View.INVISIBLE);
             emptyGraphText.setVisibility(View.INVISIBLE);
 
+            // Extract the keyword and number of occurrences from
+            // the hash map to display on the graph
             String[] keyWord = new String[hashMap.entrySet().size()];
             int[] value = new int[hashMap.keySet().size()];
             ArrayList<BarEntry> entries = new ArrayList<>();
 
             int index = 0;
             for (Map.Entry<String, Integer> map : hashMap.entrySet()) {
+                // Add each keyword and the number of occurrences to the bar graph.
+                // The keyword will be displayed underneath each bar and the
+                // number of occurrences will be displayed on top.
                 keyWord[index] = map.getKey();
                 value[index] = map.getValue();
                 entries.add(new BarEntry(index, value[index]));
@@ -81,8 +86,8 @@ public class GraphActivity extends AppCompatActivity {
             barData.setValueTextSize(TEXT_SIZE);
             barData.setValueFormatter(new IValueFormatter() {
                 @Override
-                public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
-                    return "" + ((int) value);
+                public String getFormattedValue(float value1, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
+                    return "" + ((int) value1);
                 }
             });
 
@@ -92,7 +97,8 @@ public class GraphActivity extends AppCompatActivity {
             xAxis.setTextSize(TEXT_SIZE);
             xAxis.setCenterAxisLabels(false);
             xAxis.setValueFormatter(new IndexAxisValueFormatter(keyWord));
-            //--Don't wanna display any y axis--//
+
+            //--Don't want to display any y axis--//
             YAxis yAxisRight = chart.getAxisRight();
             yAxisRight.setEnabled(false);
             YAxis yAxisLeft = chart.getAxisLeft();

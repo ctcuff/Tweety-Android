@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.WindowManager;
 
 import com.camtech.android.tweetbot.R;
@@ -38,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
         CircleIndicator indicator = findViewById(R.id.indicator);
         indicator.setViewPager(viewPager);
 
-        // Hide the status bar & navigation bar, if the device has one
+        // Hide the status bar & navigation bar if the device has one
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);

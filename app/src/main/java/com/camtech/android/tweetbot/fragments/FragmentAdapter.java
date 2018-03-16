@@ -6,7 +6,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 
 public class FragmentAdapter extends FragmentPagerAdapter {
 
-    private final int NUM_FRAGMENTS = 2;
+    private final int NUM_FRAGMENTS = 3;
 
     public FragmentAdapter(FragmentManager fm) {
         super(fm);
@@ -18,6 +18,8 @@ public class FragmentAdapter extends FragmentPagerAdapter {
             case 0:
                 return new OccurrencesFragment();
             case 1:
+                return new TweetPostedFragment();
+            case 2:
                 return new MessageFragment();
             default:
                 return null;
@@ -28,4 +30,5 @@ public class FragmentAdapter extends FragmentPagerAdapter {
     public int getCount() {
         return NUM_FRAGMENTS;
     }
+
 }
