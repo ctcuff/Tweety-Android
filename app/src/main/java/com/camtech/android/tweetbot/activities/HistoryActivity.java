@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -48,13 +49,16 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
 
         utils = new TwitterUtils();
 
-        RecyclerView recyclerView = findViewById(R.id.rv_occurrences);
+        RecyclerView recyclerView = findViewById(R.id.rv_history);
         LinearLayoutManager manager = new LinearLayoutManager(this);
 
         recyclerView.setLayoutManager(manager);
         recyclerView.setHasFixedSize(true);
 
         // Get the stored HashMap from memory if it exists
+        // and save the key-value pairs to an array. This is so that
+        // the keyword and it's number of occurrences can be displayed
+        // by the OccurrencesFragment when a word is clicked
         hashMap = utils.getHashMap();
         if (hashMap != null && !hashMap.isEmpty()) {
             tvNoHistory.setVisibility(View.GONE);

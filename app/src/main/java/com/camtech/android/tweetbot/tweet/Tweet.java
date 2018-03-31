@@ -1,7 +1,10 @@
 package com.camtech.android.tweetbot.tweet;
 
+import android.app.Instrumentation;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.TransactionTooLargeException;
+import android.util.Log;
 import android.view.View;
 
 import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
@@ -75,14 +78,14 @@ public class Tweet implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeStringArray(new String[]{
-                this.date,
-                this.screenName,
-                this.name,
-                this.userDescription,
-                this.userProfilePic,
-                this.message,
-                this.keyWord});
+            dest.writeStringArray(new String[]{
+                    this.date,
+                    this.screenName,
+                    this.name,
+                    this.userDescription,
+                    this.userProfilePic,
+                    this.message,
+                    this.keyWord});
     }
 
     public static final Creator<Tweet> CREATOR = new Creator<Tweet>() {

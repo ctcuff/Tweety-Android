@@ -6,10 +6,12 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.view.WindowManager;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.fragments.FragmentAdapter;
+import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
 
 import me.relex.circleindicator.CircleIndicator;
 
@@ -36,6 +38,23 @@ public class MainActivity extends AppCompatActivity {
 
         CircleIndicator indicator = findViewById(R.id.indicator);
         indicator.setViewPager(viewPager);
+
+        // Hide the circle indicator when the current fragment is the TweetPostedFragment
+        viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                switch (position) {
+                    case 1:
+                        indicator.setVisibility(View.GONE);
+                        break;
+                    case 0:
+                    case 2:
+                        indicator.setVisibility(View.VISIBLE);
+                        break;
+                }
+            }
+        });
 
         // Hide the status bar & navigation bar if the device has one
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);

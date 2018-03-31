@@ -182,7 +182,7 @@ public class TwitterUtils {
             hashMap = (HashMap<String, Integer>) objectInputStream.readObject();
             for (Map.Entry<String, Integer> map : hashMap.entrySet()) {
                 if (keyWord.equals(map.getKey())) {
-                    Log.i(TAG, "onClick: WORD EXISTS");
+                    Log.i(TAG, "WORD EXISTS");
                     return true;
                 }
             }

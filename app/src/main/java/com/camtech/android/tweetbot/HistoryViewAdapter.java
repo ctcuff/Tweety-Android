@@ -1,6 +1,7 @@
 package com.camtech.android.tweetbot;
 
 import android.content.Context;
+import android.media.FaceDetector;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
@@ -80,13 +81,12 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
             value[index] = map.getValue();
             index++;
         }
-
         notifyItemRemoved(position);
-        notifyItemChanged(position, hashMap.size());
+        notifyItemRangeChanged(position, hashMap.size() - 1);
     }
 
-    public void resetAdapter(HashMap<String, Integer> hashmap) {
-        this.hashMap = hashmap;
+    public void resetAdapter(HashMap<String, Integer> hashMap) {
+        this.hashMap = hashMap;
         notifyDataSetChanged();
     }
 

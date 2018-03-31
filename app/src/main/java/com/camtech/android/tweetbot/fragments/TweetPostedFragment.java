@@ -18,6 +18,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,7 +71,7 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
             builder.setMessage("Clear statuses?");
             builder.setPositiveButton("YES", (dialog, which) -> {
                 tweets = new ArrayList<>();
-                viewAdapter.resetAdapter(tweets);
+                viewAdapter.clear(tweets);
             });
             builder.setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
             clearStatusesDialog = builder.create();
@@ -121,7 +123,7 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
             }
         });
 
-        if (tweets.size() == 0) emptyView.setVisibility(View.VISIBLE);
+        if (tweets != null && tweets.size() == 0) emptyView.setVisibility(View.VISIBLE);
         else emptyView.setVisibility(View.GONE);
 
         return rootView;
@@ -129,9 +131,27 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
+        // The max (approximate) number of tweets that can be saved before a
+        // TransactionTooLargeException is thrown
+        final int MAX_PARCEL_SIZE = 500;
+
         // This is used to save the array list when the device rotates.
-        // This way, all the tweets are shown again when onCreateView is called
-        outState.putParcelableArrayList(TAG, tweets);
+        // This way, all the tweets are shown again when onCreateView is called.
+        // If the number of tweets is greater than the limit, grab the 500 most
+        // recent tweets and save that instead
+        if (tweets.size() <= MAX_PARCEL_SIZE) {
+            outState.putParcelableArrayList(TAG, tweets);
+        } else {
+            // Add the recent tweets to a temporary array list
+            ArrayList<Tweet> mostRecentTweets = new ArrayList<>();
+
+            int startingIndex = (tweets.size() - 1) - MAX_PARCEL_SIZE;
+
+            for (int i = startingIndex; i < tweets.size(); i++) {
+                mostRecentTweets.add(tweets.get(i));
+            }
+            outState.putParcelableArrayList(TAG, mostRecentTweets);
+        }
         super.onSaveInstanceState(outState);
     }
 
@@ -220,10 +240,10 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
                     viewAdapter.notifyItemInserted(tweets.size() - 1);
                 } else {
                     // The keyword has changed so we reset
-                    // the array list and the view adapter
+                    // the array list and the adapter
                     currentKeyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
                     tweets = new ArrayList<>();
-                    viewAdapter.resetAdapter(tweets);
+                    viewAdapter.clear(tweets);
 
                     tweets.add(tweet);
                     viewAdapter.notifyItemInserted(tweets.size() - 1);

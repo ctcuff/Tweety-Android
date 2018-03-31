@@ -11,6 +11,7 @@ import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,8 +37,27 @@ public class MessageFragment extends Fragment {
     private Button startStop;
     private TextView runningStatus;
     private TextView tvUserName;
+    private boolean isAttached;
 
     public static final String MESSAGE = "Message";
+
+    /**
+     * Since {@link #onResume()} might be called before the fragment
+     * is attached to a context object, we need to check whether the
+     * fragment is attached. This is so that we don't get any NPEs
+     * when using findViewById() or setText()
+     * */
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        isAttached = true;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        isAttached = false;
+    }
 
     @Nullable
     @Override
@@ -80,9 +100,12 @@ public class MessageFragment extends Fragment {
         getContext().registerReceiver(updateButtonReceiver, new IntentFilter(TwitterService.BROADCAST_UPDATE));
 
         // Once the async task has completed we can set the username to the resulted string
-        ConnectionUtils.OnPostExecuteListener listener =
-                result -> tvUserName.setText(getString(R.string.status_user, result));
-        new ConnectionUtils(listener).execute();
+        ConnectionUtils.OnPostExecuteListener listener = result -> {
+            if (result != null)
+                tvUserName.setText(getString(R.string.status_user, result));
+        };
+
+        if (isAttached) new ConnectionUtils(listener).execute();
     }
 
     @Override

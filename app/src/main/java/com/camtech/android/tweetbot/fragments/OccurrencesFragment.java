@@ -15,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -148,6 +149,7 @@ public class OccurrencesFragment extends Fragment {
         // of occurrences the TextView should be reset to 0
         if (!utils.doesWordExist(keyWord)) {
             tvNumOccurrences.setText("0");
+            Log.i("LOL ACTUALLY WTF?!??!?!?!?!", "onResume: KEYWORD RESET YOU FUCKING DUMBASS LOSER BITCH!!!");
         } else {
             // A card was clicked so we need to update the text views
             // to that clicked word
@@ -180,12 +182,6 @@ public class OccurrencesFragment extends Fragment {
         } else {
             startStop.setText(R.string.button_start);
         }
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
     }
 
     private boolean isServiceRunning(Class<?> serviceClass) {
@@ -289,7 +285,7 @@ public class OccurrencesFragment extends Fragment {
     };
 
     private void checkOrientation() {
-        // We need to change the width of the text view so that it can
+        // We need to change the width of the keyword text view so that it can
         // show longer strings when rotated horizontally
         ViewGroup.LayoutParams params = tvKeyword.getLayoutParams();
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {

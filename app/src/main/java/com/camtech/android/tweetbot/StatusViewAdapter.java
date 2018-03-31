@@ -50,7 +50,7 @@ public class StatusViewAdapter extends RecyclerView.Adapter<StatusViewAdapter.Vi
         return tweets.size();
     }
 
-    public void resetAdapter(ArrayList<Tweet> tweets) {
+    public void clear(ArrayList<Tweet> tweets) {
         this.tweets = tweets;
         notifyDataSetChanged();
     }

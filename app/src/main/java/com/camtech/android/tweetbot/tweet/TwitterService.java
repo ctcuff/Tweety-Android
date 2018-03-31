@@ -1,5 +1,6 @@
 package com.camtech.android.tweetbot.tweet;
 
+import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -11,6 +12,7 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
@@ -162,12 +164,13 @@ public class TwitterService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        new StopStreamTask().execute();
+
         notificationManager.cancel(ID_BOT_CONNECTED);
         sendBroadcast(new Intent(BROADCAST_UPDATE));
         unregisterReceiver(stopServiceReceiver);
         unregisterReceiver(connectivityReceiver);
-        twitterStream.cleanUp();
-        twitterStream.shutdown();
 
         // Save the keyword and number of occurrences into a HashMap
         SharedPreferences numOccurrencesPref = getSharedPreferences(getString(R.string.pref_num_occurrences), MODE_PRIVATE);
@@ -195,6 +198,21 @@ public class TwitterService extends Service {
             stopSelf();
         }
     };
+
+    /**
+     * Sometimes stopping the stream freezes the UI so we need
+     * to stop it using an AsyncTask
+     * */
+    @SuppressLint("StaticFieldLeak")
+    class StopStreamTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            twitterStream.cleanUp();
+            twitterStream.shutdown();
+            return null;
+        }
+    }
 
     /**
      * Receiver to listen for changes in network connection.
