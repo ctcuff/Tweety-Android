@@ -149,7 +149,6 @@ public class OccurrencesFragment extends Fragment {
         // of occurrences the TextView should be reset to 0
         if (!utils.doesWordExist(keyWord)) {
             tvNumOccurrences.setText("0");
-            Log.i("LOL ACTUALLY WTF?!??!?!?!?!", "onResume: KEYWORD RESET YOU FUCKING DUMBASS LOSER BITCH!!!");
         } else {
             // A card was clicked so we need to update the text views
             // to that clicked word
