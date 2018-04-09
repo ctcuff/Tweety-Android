@@ -18,8 +18,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,9 +26,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.StatusViewAdapter;
+import com.camtech.android.tweetbot.adapters.StatusViewAdapter;
 import com.camtech.android.tweetbot.tweet.StreamListener;
-import com.camtech.android.tweetbot.tweet.Tweet;
+import com.camtech.android.tweetbot.data.Tweet;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
 
 import java.io.IOException;
@@ -97,11 +95,13 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
         manager.setStackFromEnd(true);
 
         recyclerView = rootView.findViewById(R.id.recycler_view);
+
         // The recycler view should stretch each item
         // to fit all the text of each card
         recyclerView.setHasFixedSize(false);
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(viewAdapter);
+
         // Used to listen for when the RecyclerView reaches the bottom
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -114,11 +114,11 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                // Used to hide the FAB when the recycler view is scrolled down vertically
-                if (dy > 0 && fab.getVisibility() == View.VISIBLE) {
-                    fab.hide();
-                } else if (dy < 0 && fab.getVisibility() != View.VISIBLE) {
+                // Used to hide the FAB when the recycler view is scrolled up vertically
+                if (dy > 0 && fab.getVisibility() != View.VISIBLE) {
                     fab.show();
+                } else if (dy < 0 && fab.getVisibility() == View.VISIBLE) {
+                    fab.hide();
                 }
             }
         });

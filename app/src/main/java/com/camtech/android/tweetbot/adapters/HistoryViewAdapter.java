@@ -1,7 +1,6 @@
-package com.camtech.android.tweetbot;
+package com.camtech.android.tweetbot.adapters;
 
 import android.content.Context;
-import android.media.FaceDetector;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
@@ -12,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
 
@@ -36,6 +36,10 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
         this.hashMap = hashMap;
         this.clickListener = clickListener;
 
+        // Loop through the HashMap and extract the keyWord
+        // and number of occurrences to a String & int array,
+        // this way, it becomes easier to remove a single word
+        // without messing up the entire map
         if (hashMap != null) {
             keyWord = new String[hashMap.entrySet().size()];
             value = new int[hashMap.keySet().size()];

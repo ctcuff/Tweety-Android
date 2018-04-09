@@ -1,4 +1,4 @@
-package com.camtech.android.tweetbot;
+package com.camtech.android.tweetbot.adapters;
 
 
 import android.content.Context;
@@ -11,8 +11,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
-import com.camtech.android.tweetbot.tweet.Tweet;
+import com.camtech.android.tweetbot.data.Tweet;
 
 import java.util.ArrayList;
 

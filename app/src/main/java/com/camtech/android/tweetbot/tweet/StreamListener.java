@@ -13,6 +13,7 @@ import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 
 import com.camtech.android.tweetbot.R;
+import com.camtech.android.tweetbot.data.Tweet;
 
 import java.util.Arrays;
 import java.util.HashMap;

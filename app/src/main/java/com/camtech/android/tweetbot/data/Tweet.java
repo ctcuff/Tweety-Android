@@ -1,13 +1,11 @@
-package com.camtech.android.tweetbot.tweet;
+package com.camtech.android.tweetbot.data;
 
-import android.app.Instrumentation;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.TransactionTooLargeException;
-import android.util.Log;
 import android.view.View;
 
 import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
+import com.camtech.android.tweetbot.tweet.StreamListener;
 
 import twitter4j.Status;
 
