@@ -17,10 +17,13 @@ import com.camtech.android.tweetbot.data.Tweet;
 
 import java.util.ArrayList;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * RecyclerView adapter used in {@link TweetPostedFragment}
  * to display each tweet.
- * */
+ */
 public class StatusViewAdapter extends RecyclerView.Adapter<StatusViewAdapter.ViewHolder> {
     private ArrayList<Tweet> tweets;
     private Context context;
@@ -41,9 +44,10 @@ public class StatusViewAdapter extends RecyclerView.Adapter<StatusViewAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.statusDate.setText(tweets.get(position).getDate());
-        holder.statusUsername.setText(context.getString(R.string.status_user, tweets.get(position).getScreenName()));
-        holder.statusMessage.setText(tweets.get(position).getMessage());
+        Tweet tweet = tweets.get(position);
+        holder.statusDate.setText(tweet.getDate());
+        holder.statusUsername.setText(context.getString(R.string.status_user, tweet.getScreenName()));
+        holder.statusMessage.setText(tweet.getMessage());
     }
 
     @Override
@@ -65,16 +69,15 @@ public class StatusViewAdapter extends RecyclerView.Adapter<StatusViewAdapter.Vi
     }
 
     class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        CardView rootView;
-        TextView statusDate;
-        TextView statusUsername;
-        TextView statusMessage;
+
+        @BindView(R.id.root) CardView rootView;
+        @BindView(R.id.status_date) TextView statusDate;
+        @BindView(R.id.status_user) TextView statusUsername;
+        @BindView(R.id.status_message) TextView statusMessage;
+
         ViewHolder(View itemView) {
             super(itemView);
-            rootView = itemView.findViewById(R.id.root);
-            statusDate = itemView.findViewById(R.id.status_date);
-            statusUsername = itemView.findViewById(R.id.status_user);
-            statusMessage = itemView.findViewById(R.id.status_message);
+            ButterKnife.bind(this, itemView);
 
             // Makes the links in the tweets clickable
             statusMessage.setMovementMethod(LinkMovementMethod.getInstance());

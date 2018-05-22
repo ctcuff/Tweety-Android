@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import twitter4j.Status;
 
 /**
@@ -45,23 +47,23 @@ import twitter4j.Status;
 public class TweetPostedFragment extends Fragment implements StatusViewAdapter.OnItemClickedListener {
 
     private final String TAG = TweetPostedFragment.class.getSimpleName();
-    private RecyclerView recyclerView;
     private StatusViewAdapter viewAdapter;
     private ArrayList<Tweet> tweets;
     private boolean isRecyclerViewAtBottom;
     private String currentKeyWord;
     private SharedPreferences keywordPref;
-    private TextView emptyView;
-    private FloatingActionButton fab;
     private AlertDialog clearStatusesDialog;
+
+    @BindView(R.id.recycler_view) RecyclerView recyclerView;
+    @BindView(R.id.empty_view) TextView emptyView;
+    @BindView(R.id.fab) FloatingActionButton fab;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.status_posted_fragment, container, false);
-        emptyView = rootView.findViewById(R.id.empty_view);
+        ButterKnife.bind(this, rootView);
 
-        fab = rootView.findViewById(R.id.fab);
         // Scroll to the bottom of the recycler view when the fab is clicked
         fab.setOnClickListener(v -> recyclerView.smoothScrollToPosition(tweets.size()));
         // Open a dialog to clear the screen when the FAB is long clicked
@@ -85,8 +87,9 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
         // Re-load the array list from the saved state. This happens when
         // the device is rotated or in the event that the user leaves the
         // app then re-opens it.
-        if (savedInstanceState == null) tweets = new ArrayList<>();
-        else tweets = savedInstanceState.getParcelableArrayList(TAG);
+        tweets = savedInstanceState == null
+                ? new ArrayList<>()
+                : savedInstanceState.getParcelableArrayList(TAG);
 
         viewAdapter = new StatusViewAdapter(getContext(), tweets);
         viewAdapter.setOnItemClickedListener(this);
@@ -94,8 +97,6 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         //This makes sure that the newest cards appear at the bottom
         manager.setStackFromEnd(true);
-
-        recyclerView = rootView.findViewById(R.id.recycler_view);
 
         // The recycler view should stretch each item
         // to fit all the text of each card

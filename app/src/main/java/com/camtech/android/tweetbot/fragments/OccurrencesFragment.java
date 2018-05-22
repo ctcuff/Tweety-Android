@@ -32,6 +32,8 @@ import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.tweet.TwitterService;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import twitter4j.Status;
 
 /**
@@ -43,20 +45,20 @@ public class OccurrencesFragment extends Fragment {
     public static final String OCCURRENCES = "occurrences";
     private int numOccurrences;
     private String keyWord;
-    private Button startStop;
     private SharedPreferences keywordPref;
     private SharedPreferences numOccurrencesPref;
-    private TextView tvKeyword;
-    private TextView tvNumOccurrences;
     private TwitterUtils utils;
     private AlertDialog resetKeyWordDialog;
     private AlertDialog resetOccurrencesDialog;
+    @BindView(R.id.bt_start_stop) Button startStop;
+    @BindView(R.id.tv_keyword) TextView tvKeyword;
+    @BindView(R.id.tv_num_occurrences) TextView tvNumOccurrences;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.occurrences_fragment, container, false);
-
+        ButterKnife.bind(this, rootView);
         utils = new TwitterUtils();
 
         keywordPref = getContext().getSharedPreferences(getString(R.string.pref_keyword), Context.MODE_PRIVATE);
@@ -64,7 +66,6 @@ public class OccurrencesFragment extends Fragment {
         keyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
         numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
 
-        startStop = rootView.findViewById(R.id.bt_start_stop);
         startStop.setOnClickListener(v -> {
             vibrate(30);
             if (!isServiceRunning(TwitterService.class)) {
@@ -79,7 +80,6 @@ public class OccurrencesFragment extends Fragment {
             }
         });
 
-        tvNumOccurrences = rootView.findViewById(R.id.tv_num_occurrences);
         tvNumOccurrences.setText(String.valueOf(numOccurrences));
         tvNumOccurrences.setOnClickListener(view -> {
             if (!isServiceRunning(TwitterService.class)) {
@@ -98,7 +98,6 @@ public class OccurrencesFragment extends Fragment {
                 Toast.makeText(getContext(), "Stop first to reset the counter", Toast.LENGTH_SHORT).show();
             }
         });
-        tvKeyword = rootView.findViewById(R.id.tv_keyword);
         tvKeyword.setText(getString(R.string.tv_keyword, keyWord));
         tvKeyword.setOnClickListener(v -> {
             vibrate(30);

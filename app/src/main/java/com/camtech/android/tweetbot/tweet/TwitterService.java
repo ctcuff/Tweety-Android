@@ -157,8 +157,7 @@ public class TwitterService extends Service {
         });
 
         // Only want the bot to restart when it's listening for direct messages
-        if (mode != null && mode.equals(OccurrencesFragment.OCCURRENCES)) return START_NOT_STICKY;
-        else return START_STICKY;
+        return mode != null && mode.equals(OccurrencesFragment.OCCURRENCES) ? START_NOT_STICKY : START_STICKY;
     }
 
     @Override

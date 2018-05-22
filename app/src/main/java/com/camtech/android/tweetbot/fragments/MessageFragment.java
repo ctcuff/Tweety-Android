@@ -23,6 +23,8 @@ import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.tweet.TwitterService;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import twitter4j.DirectMessage;
 import twitter4j.TwitterException;
 
@@ -34,12 +36,12 @@ import twitter4j.TwitterException;
  * */
 public class MessageFragment extends Fragment {
 
-    private Button startStop;
-    private TextView runningStatus;
-    private TextView tvUserName;
     private boolean isAttached;
-
     public static final String MESSAGE = "Message";
+
+    @BindView(R.id.bt_start_stop) Button startStop;
+    @BindView(R.id.tv_running_status) TextView runningStatus;
+    @BindView(R.id.tv_username) TextView tvUserName;
 
     /**
      * Since {@link #onResume()} might be called before the fragment
@@ -63,12 +65,10 @@ public class MessageFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.message_fragment, container, false);
+        ButterKnife.bind(this, rootView);
 
-        tvUserName = rootView.findViewById(R.id.tv_username);
         tvUserName.setText(R.string.username_loading);
 
-        runningStatus = rootView.findViewById(R.id.tv_running_status);
-        startStop = rootView.findViewById(R.id.bt_start_stop);
         startStop.setOnClickListener(view -> {
             vibrate(30);
             if (!isServiceRunning(TwitterService.class)) {

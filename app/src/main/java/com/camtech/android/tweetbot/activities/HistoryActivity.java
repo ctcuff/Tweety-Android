@@ -22,6 +22,9 @@ import com.camtech.android.tweetbot.tweet.TwitterUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class HistoryActivity extends AppCompatActivity implements HistoryViewAdapter.ClickListener {
 
     private String[] keyWord;
@@ -29,14 +32,17 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     private HashMap<String, Integer> hashMap;
     private TwitterUtils utils;
     private HistoryViewAdapter viewAdapter;
-    private TextView tvNoHistory;
+
+    @BindView(R.id.tv_no_history) TextView tvNoHistory;
+    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.rv_history) RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
+        ButterKnife.bind(this);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -44,11 +50,8 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         setTitle("History");
         toolbar.setTitleTextColor(Color.WHITE);
 
-        tvNoHistory = findViewById(R.id.tv_no_history);
-
         utils = new TwitterUtils();
 
-        RecyclerView recyclerView = findViewById(R.id.rv_history);
         LinearLayoutManager manager = new LinearLayoutManager(this);
 
         recyclerView.setLayoutManager(manager);

@@ -18,6 +18,9 @@ import com.camtech.android.tweetbot.tweet.TwitterUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * Custom RecyclerView adapter used in
  * {@link HistoryActivity}
@@ -98,18 +101,16 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
         void onItemClicked(int position);
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
-        TextView tvKeyword;
-        TextView tvValue;
-        CardView cardView;
-        ImageView icDelete;
+    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+        @BindView(R.id.tv_keyword) TextView tvKeyword;
+        @BindView(R.id.tv_num_occurrences) TextView tvValue;
+        @BindView(R.id.card_view) CardView cardView;
+        @BindView(R.id.ic_delete) ImageView icDelete;
 
         ViewHolder(View itemView) {
             super(itemView);
-            tvKeyword = itemView.findViewById(R.id.tv_keyword);
-            tvValue = itemView.findViewById(R.id.tv_num_occurrences);
-            cardView = itemView.findViewById(R.id.card_view);
-            icDelete = itemView.findViewById(R.id.ic_delete);
+            ButterKnife.bind(this, itemView);
             cardView.setOnClickListener(this);
             icDelete.setOnClickListener(v -> {
                 AlertDialog.Builder builder = new AlertDialog.Builder(itemView.getContext());
