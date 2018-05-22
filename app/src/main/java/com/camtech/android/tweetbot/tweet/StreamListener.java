@@ -179,15 +179,11 @@ public class StreamListener implements UserStreamListener {
             String searchWord = searchQuery[searchQuery.length - 1];
             if (searchQuery.length == 4) {
                 // Handles a one word search, i.e.: 'Search Google for cats'
-                utils.sendMessage(sender, "Searching Google for " + searchWord + "...");
-                utils.sleep(2000);
                 utils.sendMessage(sender, "Here's what I found:\nhttps://www.google.com/search?q=" + searchWord);
             } else {
                 // Handles a multi word search, i.e: 'Search Google for Kayne West'
                 String searchWords = message.replace("search google for ", "");
-                utils.sendMessage(sender, "Searching Google for " + searchWords);
                 searchWords = searchWords.replace(" ", "+");
-                utils.sleep(2000);
                 utils.sendMessage(sender, "Here's what I found:\nhttps://www.google.com/search?q=" + searchWords);
             }
         }
@@ -337,7 +333,7 @@ public class StreamListener implements UserStreamListener {
             // Error 402 occurs when there are too many auth
             // requests in a short amount of time
             if (error.getMessage().contains("420")) {
-                builder.setContentText("Error " + error.getMessage() + "\n\nPlease wait 30 seconds before trying again");
+                builder.setContentText("Error " + error.getMessage() + "\nPlease wait 30 seconds before trying again");
             } else {
                 builder.setContentText("Error " + error.getMessage());
             }
