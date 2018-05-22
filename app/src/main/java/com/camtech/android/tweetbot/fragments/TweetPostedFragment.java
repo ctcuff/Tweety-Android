@@ -30,6 +30,7 @@ import com.camtech.android.tweetbot.adapters.StatusViewAdapter;
 import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.data.Tweet;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.net.URL;
@@ -193,14 +194,8 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
             case R.id.status_message:
                 View dialogSheet = getLayoutInflater().inflate(R.layout.bottom_sheet_dialog, null);
 
-                // Because we can't open a connection on the main thread, the user's profile
-                // picture will have to be loaded in an async task
                 ImageView userProfilePic = dialogSheet.findViewById(R.id.iv_user_profile_pic);
-                // Here, we set a listener to set the bitmap to the loaded image
-                // once the async task finishes.
-                // This lambda expression is the same as: bitmap -> userProfilePic.setImageBitmap(bitmap)
-                LoadProfilePic.OnPostExecuteListener listener = userProfilePic::setImageBitmap;
-                new LoadProfilePic(listener).execute(tweet.getUserProfilePic());
+                Picasso.get().load(tweet.getUserProfilePic()).into(userProfilePic);
 
                 Button viewProfile = dialogSheet.findViewById(R.id.bt_view_profile);
                 viewProfile.setOnClickListener(view -> openUserProfile(position));
@@ -269,39 +264,6 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
             startActivity(new Intent(
                     Intent.ACTION_VIEW,
                     Uri.parse(TwitterUtils.BASE_TWITTER_URL + tweets.get(position).getScreenName())));
-        }
-    }
-
-    /**
-     * AsyncTask to load the profile picture of a user
-     */
-    private static class LoadProfilePic extends AsyncTask<String, Void, Bitmap> {
-
-        private OnPostExecuteListener listener;
-
-        LoadProfilePic(OnPostExecuteListener listener) {
-            this.listener = listener;
-        }
-
-        @Override
-        protected Bitmap doInBackground(String... strings) {
-            try {
-                URL imageLink = new URL(strings[0]);
-                return BitmapFactory.decodeStream(imageLink.openConnection().getInputStream());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            super.onPostExecute(bitmap);
-            listener.onPostExecuteListener(bitmap);
-        }
-
-        interface OnPostExecuteListener {
-            void onPostExecuteListener(Bitmap bitmap);
         }
     }
 }
