@@ -50,6 +50,7 @@ public class OccurrencesFragment extends Fragment {
     private TwitterUtils utils;
     private AlertDialog resetKeyWordDialog;
     private AlertDialog resetOccurrencesDialog;
+
     @BindView(R.id.bt_start_stop) Button startStop;
     @BindView(R.id.tv_keyword) TextView tvKeyword;
     @BindView(R.id.tv_num_occurrences) TextView tvNumOccurrences;
@@ -89,7 +90,7 @@ public class OccurrencesFragment extends Fragment {
                     numOccurrencesPref.edit().putInt(getString(R.string.pref_num_occurrences), 0).apply();
                     numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
                     tvNumOccurrences.setText(String.valueOf(numOccurrences));
-                    new TwitterUtils().saveHashMap(keyWord, 0);
+                    utils.saveHashMap(keyWord, 0);
                 });
                 builder.setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
                 resetOccurrencesDialog = builder.create();

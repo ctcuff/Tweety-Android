@@ -6,10 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -27,13 +24,11 @@ import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.adapters.StatusViewAdapter;
-import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.data.Tweet;
+import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.tweet.TwitterUtils;
 import com.squareup.picasso.Picasso;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -53,10 +48,12 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
     private String currentKeyWord;
     private SharedPreferences keywordPref;
     private AlertDialog clearStatusesDialog;
+    private BottomSheetDialog bottomSheetDialog;
 
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
     @BindView(R.id.empty_view) TextView emptyView;
     @BindView(R.id.fab) FloatingActionButton fab;
+
 
     @Nullable
     @Override
@@ -179,6 +176,10 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
         if (clearStatusesDialog != null) {
             clearStatusesDialog.dismiss();
         }
+
+        if (bottomSheetDialog != null) {
+            bottomSheetDialog.dismiss();
+        }
     }
 
     @Override
@@ -211,9 +212,9 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
                 if (tweet.getUserDescription() == null) userDescription.setVisibility(View.GONE);
                 else userDescription.setText(tweet.getUserDescription());
 
-                BottomSheetDialog dialog = new BottomSheetDialog(getContext());
-                dialog.setContentView(dialogSheet);
-                dialog.show();
+                bottomSheetDialog = new BottomSheetDialog(getContext());
+                bottomSheetDialog.setContentView(dialogSheet);
+                bottomSheetDialog.show();
                 break;
         }
     }
