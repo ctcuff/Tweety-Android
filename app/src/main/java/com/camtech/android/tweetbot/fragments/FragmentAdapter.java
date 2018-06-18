@@ -20,7 +20,7 @@ public class FragmentAdapter extends FragmentPagerAdapter {
             case 1:
                 return new TweetPostedFragment();
             case 2:
-                return new MessageFragment();
+                return new StatusSearchFragment();
             default:
                 return null;
         }

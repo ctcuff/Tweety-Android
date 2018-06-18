@@ -17,4 +17,14 @@
         android:summaryOn="@string/pref_english_only_true"
         android:title="@string/pref_english_only_label" />
 
+    <PreferenceCategory android:title="Twitter"/>
+
+    <Preference
+        android:title="Sign In"
+        android:key="@string/pref_sign_in_key"/>
+
+    <Preference
+        android:title="Log out"
+        android:key="@string/pref_logout_key"/>
+
 </PreferenceScreen>

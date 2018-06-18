@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dialog_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/dialog_layout">
+    android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/et_change_keyword"
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/text_input_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
         android:layout_centerInParent="true"
-        android:inputType="text"
-        android:hint="@string/dialog_keyword_hint"/>
+        android:layout_margin="16dp">
+
+        <EditText
+            android:id="@+id/et_query"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:inputType="text" />
+    </android.support.design.widget.TextInputLayout>
+
 
 </RelativeLayout>

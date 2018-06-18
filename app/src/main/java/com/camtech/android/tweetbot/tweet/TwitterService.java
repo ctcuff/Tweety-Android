@@ -13,6 +13,7 @@ import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
@@ -20,11 +21,10 @@ import android.support.v4.app.TaskStackBuilder;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.MainActivity;
-import com.camtech.android.tweetbot.fragments.OccurrencesFragment;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import twitter4j.ConnectionLifeCycleListener;
 import twitter4j.FilterQuery;
-import twitter4j.Twitter;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 
@@ -38,10 +38,8 @@ public class TwitterService extends Service {
     private TwitterStream twitterStream;
     private final String INTENT_STOP_SERVICE = "stopService";
     private final int ID_CONNECTION_LOST = 1;
-    private String mode;
     private SharedPreferences keywordPref;
     private String keyWord;
-    private StreamListener streamListener;
     private NotificationManager notificationManager;
     private NotificationCompat.Builder builder;
     private ConnectivityReceiver connectivityReceiver;
@@ -69,35 +67,21 @@ public class TwitterService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // This broadcast is sent to update the button text on each fragment
+        // This broadcast is sent to update the button text on the OccurrencesFragment
         sendBroadcast(new Intent(BROADCAST_UPDATE));
-
-        // Determine which fragment started this service
-        if (intent != null) mode = intent.getStringExtra(Intent.EXTRA_TEXT);
 
         keywordPref = getSharedPreferences(getString(R.string.pref_keyword), MODE_PRIVATE);
         keyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
 
-        Twitter twitter = TwitterUtils.setUpTwitter();
-        twitterStream = new TwitterStreamFactory(TwitterUtils.getConfig()).getInstance();
+        twitterStream = new TwitterStreamFactory(TwitterUtils.getConfig(this)).getInstance();
 
-        if (mode != null && mode.equals(OccurrencesFragment.OCCURRENCES)) {
-            // Used to listen for a specific word or phrase
-            streamListener = new StreamListener(this, twitter, keyWord);
-            // Set a filter for the keyword to track its occurrences
-            FilterQuery query = new FilterQuery(keyWord);
-            query.track(keyWord);
-
-            twitterStream.addListener(streamListener);
-            twitterStream.filter(query);
-
-        } else {
-            // Used to listen for status updates, replies, messages, etc..
-            // Mostly various user responses
-            streamListener = new StreamListener(this, twitter);
-            twitterStream.addListener(streamListener);
-            twitterStream.user();
-        }
+        // Used to listen for a specific word or phrase
+        StreamListener streamListener = new StreamListener(this, keyWord);
+        // Set a filter for the keyword to track its occurrences
+        FilterQuery query = new FilterQuery(keyWord);
+        query.track(keyWord);
+        twitterStream.addListener(streamListener);
+        twitterStream.filter(query);
 
         // Intent to open the OccurrencesFragment when the "OPEN" button is clicked
         Intent openActivityIntent = new Intent(this, MainActivity.class);
@@ -106,26 +90,23 @@ public class TwitterService extends Service {
                 .addNextIntent(openActivityIntent);
         PendingIntent openActivity = taskStackBuilder.getPendingIntent(100, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        builder = new NotificationCompat.Builder(this, "TwitterService");
         // Construct the notification to show all text when swiped down
+        builder = new NotificationCompat.Builder(this, "TwitterService");
         builder.setStyle(new NotificationCompat.BigTextStyle());
         builder.setShowWhen(false);
         builder.setAutoCancel(true);
         builder.setSmallIcon(R.drawable.ic_stat_message);
         builder.setContentTitle(getString(R.string.notification_title));
         builder.addAction(R.drawable.ic_stat_message, "OPEN", openActivity);
-        builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
         builder.setVibrate(new long[]{}); // If we don't include this, the notification won't drop down
         builder.setOngoing(true); //Notification can't be swiped away
-
-        if (mode != null && mode.equals(OccurrencesFragment.OCCURRENCES)) {
-            builder.setColor(getColor(R.color.colorOccurrences));
-            builder.setUsesChronometer(true);
-            builder.setContentText(getString(R.string.notification_stream_occurrences, keyWord));
-        } else {
-            builder.setColor(getColor(R.color.colorMessages));
-            builder.setContentText(getString(R.string.notification_stream_message));
+        builder.setColor(getResources().getColor(R.color.colorOccurrences));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
         }
+        builder.setUsesChronometer(true);
+        builder.setContentText(getString(R.string.notification_stream_occurrences, keyWord));
+
 
         // Intent to stop the service when the notification is clicked
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
@@ -157,14 +138,25 @@ public class TwitterService extends Service {
         });
 
         // Only want the bot to restart when it's listening for direct messages
-        return mode != null && mode.equals(OccurrencesFragment.OCCURRENCES) ? START_NOT_STICKY : START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // Sometimes stopping the stream freezes the UI so we need
+        // to stop it using an AsyncTask
+        @SuppressLint("StaticFieldLeak")
+        AsyncTask<Void, Void, Void> stopStreamTask = new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
+                twitterStream.cleanUp();
+                twitterStream.shutdown();
+                return null;
+            }
+        };
 
-        new StopStreamTask().execute();
+        stopStreamTask.execute();
 
         notificationManager.cancel(ID_BOT_CONNECTED);
         sendBroadcast(new Intent(BROADCAST_UPDATE));
@@ -199,21 +191,6 @@ public class TwitterService extends Service {
     };
 
     /**
-     * Sometimes stopping the stream freezes the UI so we need
-     * to stop it using an AsyncTask
-     * */
-    @SuppressLint("StaticFieldLeak")
-    class StopStreamTask extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            twitterStream.cleanUp();
-            twitterStream.shutdown();
-            return null;
-        }
-    }
-
-    /**
      * Receiver to listen for changes in network connection.
      * Since this isn't registered in the Manifest, this receiver
      * only lives within the lifecycle of the service.
@@ -230,14 +207,16 @@ public class TwitterService extends Service {
                     builder.setContentTitle(getString(R.string.notification_title));
                     builder.setSmallIcon(R.drawable.ic_stat_message);
                     builder.setContentText("Error connecting to stream, no mobile data");
-                    builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
-                    // The vibration pattern is {delay, vibrate, sleep, vibrate}
-                    builder.setColor(getColor(R.color.colorNotificationError));
+                    builder.setColor(getResources().getColor(R.color.colorNotificationError));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
+                    }
                     // Don't vibrate if the user's device is on silent
                     if (audio != null) {
                         switch (audio.getRingerMode()) {
                             case AudioManager.RINGER_MODE_NORMAL:
                             case AudioManager.RINGER_MODE_VIBRATE:
+                                // The vibration pattern is {delay, vibrate, sleep, vibrate}
                                 builder.setVibrate(new long[]{0, 250, 250, 250});
                                 break;
                             case AudioManager.RINGER_MODE_SILENT:

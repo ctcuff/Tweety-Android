@@ -1,9 +1,19 @@
-package com.camtech.android.tweetbot.tweet;
+package com.camtech.android.tweetbot.utils;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.data.Keys;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.TwitterAuthProvider;
+import com.twitter.sdk.android.core.TwitterCore;
+import com.twitter.sdk.android.core.TwitterSession;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,15 +37,17 @@ import twitter4j.conf.ConfigurationBuilder;
 public class TwitterUtils {
     private Twitter twitter;
     private static final int DELAY = 1000;
-    private final String TAG = TwitterUtils.class.getSimpleName();
+    private static final String TAG = TwitterUtils.class.getSimpleName();
     private HashMap<String, Integer> hashMap;
     private final String FILE_NAME = "Occurrences.dat";
     private final String FOLDER_NAME = "TweetData";
 
     // Will open to the twitter website
     public static final String BASE_TWITTER_URL = "https://twitter.com/";
-    // Will open in the twitter app
+    // Will open the user's profile in the twitter app
     public static final String BASE_TWITTER_URI = "twitter://user?screen_name=";
+    // Will open a specific tweet in the Twitter app
+    public static final String BASE_TWITTER_STATUS_URI = "twitter://status?status_id=";
 
     public TwitterUtils() {
     }
@@ -45,25 +57,54 @@ public class TwitterUtils {
     }
 
     /**
-     * Helper method to authorize the twitter account.
-     * This MUST be called before a Twitter object is
-     * passed into the constructor.
-     */
-    public static Twitter setUpTwitter() {
-        return new TwitterFactory(getConfig()).getInstance();
-    }
-
-    /**
      * Helper method to build the configuration
      */
-    public static Configuration getConfig() {
+    public static Configuration getConfig(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(
+                context.getString(R.string.pref_auth),
+                Context.MODE_PRIVATE);
+        String token = sharedPreferences.getString(context.getString(R.string.pref_token), null);
+        String tokenSecret = sharedPreferences.getString(context.getString(R.string.pref_token_secret), null);
+
+        if (token == null || tokenSecret == null) {
+            Log.i(TAG, "getConfig: Tokens were null");
+            return null;
+        }
+
         ConfigurationBuilder cb = new ConfigurationBuilder();
         cb.setDebugEnabled(true)
                 .setOAuthConsumerKey(Keys.CONSUMER_KEY)
                 .setOAuthConsumerSecret(Keys.CONSUMER_KEY_SECRET)
-                .setOAuthAccessToken(Keys.ACCESS_TOKEN)
-                .setOAuthAccessTokenSecret(Keys.ACCESS_TOKEN_SECRET);
+                .setOAuthAccessToken(token)
+                .setOAuthAccessTokenSecret(tokenSecret);
         return cb.build();
+    }
+
+    /**
+     * Uses the token and token secret stored in shared preferences
+     * to authenticate a user
+     *
+     * @return a {@link Twitter} object if the user is authenticated, null otherwise
+     */
+    public static Twitter getTwitter(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(
+                context.getString(R.string.pref_auth),
+                Context.MODE_PRIVATE);
+        String token = sharedPreferences.getString(context.getString(R.string.pref_token), null);
+        String tokenSecret = sharedPreferences.getString(context.getString(R.string.pref_token_secret), null);
+
+        if (token == null || tokenSecret == null) {
+            Log.i(TAG, "getTwitter: Tokens were null");
+            return null;
+        }
+
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.setDebugEnabled(true)
+                .setOAuthConsumerKey(Keys.CONSUMER_KEY)
+                .setOAuthConsumerSecret(Keys.CONSUMER_KEY_SECRET)
+                .setOAuthAccessToken(token)
+                .setOAuthAccessTokenSecret(tokenSecret);
+        return new TwitterFactory(cb.build()).getInstance();
     }
 
     /**
@@ -190,6 +231,73 @@ public class TwitterUtils {
             Log.i(TAG, "Error checking keyword", e);
         }
         return false;
+    }
+
+    /**
+     * Handles authentication with Twitter. Once the process has completed
+     * successfully, the access token and access token secret are saved to a shared preference
+     * so various Twitter methods can be called
+     */
+    public static void handleTwitterSession(TwitterSession session, Activity activity) {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        SharedPreferences credentialsPref = activity.getSharedPreferences(
+                activity.getString(R.string.pref_auth),
+                Context.MODE_PRIVATE);
+
+        AuthCredential credential = TwitterAuthProvider.getCredential(
+                session.getAuthToken().token,
+                session.getAuthToken().secret);
+
+        Log.i(TAG, "handleTwitterSession: TOKEN " +  session.getAuthToken().token);
+        Log.i(TAG, "handleTwitterSession: TOKEN SECRET " +  session.getAuthToken().secret);
+
+        auth.signInWithCredential(credential).addOnCompleteListener(activity, task -> {
+            if (task.isSuccessful()) {
+                Log.i(TAG, "Auth: success");
+                // Store the access token and token secret in a shared preference so
+                // we can access different Twitter methods later
+                credentialsPref.edit()
+                        .putString(activity.getString(R.string.pref_token), session.getAuthToken().token)
+                        .putString(activity.getString(R.string.pref_token_secret), session.getAuthToken().secret)
+                        .apply();
+            } else {
+                Log.i(TAG, "Auth: failure ", task.getException());
+                Toast.makeText(activity, "Authentication failed.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /**
+     * Checks if the user is currently logged in to Twitter.
+     *
+     * @return true if the user is logged in
+     */
+    public static boolean isUserLoggedIn() {
+        return FirebaseAuth.getInstance().getCurrentUser() != null;
+    }
+
+    /**
+     * Logs a user out of Twitter (only if they aren't already logged out)
+     * and clears the access token and access token secret from shared preferences.
+     */
+    public static void logout() {
+        if (isUserLoggedIn()) {
+            FirebaseAuth.getInstance().signOut();
+            TwitterCore.getInstance().getSessionManager().clearActiveSession();
+            // TODO clear out the shared preferences
+        } else {
+            Log.i(TAG, "User is already logged out!");
+        }
+    }
+
+    /**
+     * Creates a URL for a specific status that opens to the Twitter website
+     *
+     * @param screenName The user of the status
+     * @param statusId   The ID of the status
+     */
+    public static String getTwitterStatusUrl(String screenName, long statusId) {
+        return String.format("https://twitter.com/%s/status/%s", screenName, String.valueOf(statusId));
     }
 
     public void sleep(long time) {

@@ -26,7 +26,7 @@ import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.adapters.StatusViewAdapter;
 import com.camtech.android.tweetbot.data.Tweet;
 import com.camtech.android.tweetbot.tweet.StreamListener;
-import com.camtech.android.tweetbot.tweet.TwitterUtils;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -257,8 +257,8 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
     private void openUserProfile(int position) {
         try {
             // Opens the user in the Twitter app
-            startActivity(new Intent(
-                    Intent.ACTION_VIEW,
+            startActivity(
+                    new Intent(Intent.ACTION_VIEW,
                     Uri.parse(TwitterUtils.BASE_TWITTER_URI + tweets.get(position).getScreenName())));
         } catch (Exception e) {
             // The user doesn't have Twitter installed

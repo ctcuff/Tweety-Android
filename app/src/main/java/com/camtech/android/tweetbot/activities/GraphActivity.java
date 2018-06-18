@@ -10,7 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.tweet.TwitterUtils;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
@@ -79,7 +79,7 @@ public class GraphActivity extends AppCompatActivity {
             }
 
             BarDataSet barDataSet = new BarDataSet(entries, "Occurrences");
-            barDataSet.setColor(getResources().getColor(R.color.colorOccurrences, null));
+            barDataSet.setColor(R.color.colorOccurrences);
 
             BarData barData = new BarData(barDataSet);
             barData.setBarWidth(0.50f);

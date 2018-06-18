@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Tweet Bot</string>
+    <string name="app_name">Tweety</string>
     <string name="tv_keyword">Keyword: %s</string>
     <string name="title_activity_message">MessageActivity</string>
 
@@ -11,7 +11,7 @@
 
     <string name="pref_keyword">prefKeyword</string>
     <string name="pref_num_occurrences">prefOccurrences</string>
-    <string name="pref_default_keyword">hello world</string>
+    <string name="pref_default_keyword">tap to change</string>
     <string name="status_user">\@%s</string>
     <string name="button_stop">stop</string>
     <string name="button_start">start</string>
@@ -19,9 +19,7 @@
     <string name="username_loading">Loading…</string>
     <string name="status_running">Running</string>
     <string name="notification_stream_message">Stream connected, listening for messages. Touch to stop</string>
-    <string name="notification_stream_occurrences">
-        Stream connected. Listening for occurrences of \"%s\". Touch to stop
-    </string>
+    <string name="notification_stream_occurrences">Stream connected. Listening for occurrences of \"%s\". Touch to stop</string>
     <string name="notification_title">TwitterStream</string>
 
     <string name="filler_text">
@@ -43,6 +41,15 @@
     <string name="pref_english_only_label">Restrict to English</string>
     <string name="pref_english_only_true">Only English statuses will be shown</string>
     <string name="pref_english_only_false">Statuses will be shown in any language</string>
+
+    <string name="pref_logout_key">logout_key</string>
+    <string name="pref_sign_in_key">sign_in</string>
+
+
+    <string name="pref_auth">Auth</string>
+    <string name="pref_token">token</string>
+    <string name="pref_token_secret">tokenSecret</string>
+
     <string name="recycler_view_empty">No tweets yet</string>
     <string name="empty_graph">Looks like you don\'t have any data to graph</string>
     <string name="empty_history">Looks like you don\'t have any data</string>
@@ -50,4 +57,12 @@
     <string name="dialog_keyword_hint">Keyword</string>
     <string name="messaging">Messaging</string>
     <string name="occurrences">Occurrences</string>
+    <string name="login_dialog_message">In order to use most features of this app, you\'ll need to log in to your Twitter account.</string>
+    <string name="default_user_search_text">Tap here to enter a username</string>
+    <string name="button_search">Search</string>
+
+    <string name="user_not_exists">User does not exit</string>
+    <string name="empty_statuses">No statuses to show</string>
+    <string name="initial_status_text">Statuses will appear here</string>
+
 </resources>

@@ -12,30 +12,30 @@
         android:id="@+id/iv_graph"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_graph"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="14dp"
-        android:layout_marginStart="16dp"/>
+        android:src="@drawable/ic_graph" />
 
     <TextView
         android:id="@+id/tv_keyword"
         android:layout_width="wrap_content"
-        android:gravity="center"
         android:layout_height="wrap_content"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:ellipsize="end"
-        android:maxLines="1"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
         android:text="@string/tv_keyword"
-        tools:text="KeyWord: Kendrick Lamar"/>
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        tools:text="KeyWord: Kendrick Lamar" />
 
     <ImageView
         android:id="@+id/iv_settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
         android:layout_margin="8dp"
         android:src="@drawable/ic_settings" />
 
@@ -59,7 +59,7 @@
             android:gravity="center"
             android:textColor="#FFFFFF"
             android:textSize="60sp"
-            tools:text="30"/>
+            tools:text="30" />
     </LinearLayout>
 
     <Button

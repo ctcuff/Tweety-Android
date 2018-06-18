@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
-import com.camtech.android.tweetbot.tweet.TwitterUtils;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,7 +77,7 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
 
     private void removeCard(int position) {
         //Remove the selected card making sure to re-save the HashMap
-        hashMap.remove(keyWord[position], value[position]);
+        hashMap.remove(keyWord[position]);
         utils.saveHashMap(hashMap);
 
         keyWord = new String[hashMap.entrySet().size()];

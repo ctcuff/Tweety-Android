@@ -17,7 +17,7 @@ import android.widget.TextView;
 
 import com.camtech.android.tweetbot.adapters.HistoryViewAdapter;
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.tweet.TwitterUtils;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import java.util.HashMap;
 import java.util.Map;
