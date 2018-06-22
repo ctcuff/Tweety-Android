@@ -33,7 +33,6 @@ public class StreamListener implements UserStreamListener {
 
     private static final String TAG = StreamListener.class.getSimpleName();
 
-    private TwitterUtils utils;
     private int wordCount;
     private Context context;
     private Intent intentUpdateUI;
@@ -49,22 +48,16 @@ public class StreamListener implements UserStreamListener {
      * Mainly used in {@link #onStatus(Status)}
      */
     StreamListener(Context context, String keyWord) {
-        Log.i(TAG, "Listening for occurrences of " + keyWord);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         this.context = context;
         this.keyWord = keyWord;
-
-        utils = new TwitterUtils();
-
         // Check to see if the key word is new. If it is,
         // set the number of occurrences to 0. If it's not, get
         // the value from the saved HashMap.
-        HashMap<String, Integer> hashMap = utils.getHashMap();
-        if (hashMap != null && utils.doesWordExist(keyWord)) {
-            wordCount = hashMap.get(keyWord);
-        } else {
-            wordCount = 0;
-        }
+        HashMap<String, Integer> hashMap = TwitterUtils.getHashMap();
+        wordCount = hashMap != null && TwitterUtils.doesWordExist(keyWord)
+                ? hashMap.get(keyWord)
+                : 0;
         // Intent to update the text in Occurrences/Messages fragment
         intentUpdateUI = new Intent(LISTENER_BROADCAST);
     }
@@ -159,6 +152,7 @@ public class StreamListener implements UserStreamListener {
         String message = status.getText();
         String userProfilePic = status.getUser().getBiggerProfileImageURL();
         String userDescription = status.getUser().getDescription();
+        long id = status.getId();
 
         // Check to see if the tweet is a re-tweet
         boolean wasRetweet = message.startsWith("RT");
@@ -172,7 +166,7 @@ public class StreamListener implements UserStreamListener {
 
         // Package the tweet into an intent so it can be sent via broadcast
         intentUpdateUI.putExtra(NEW_TWEET_BROADCAST,
-                new Tweet(date, screenName, name, userDescription, userProfilePic, message, keyWord));
+                new Tweet(date, screenName, name, userDescription, userProfilePic, message, keyWord, id));
 
         if (canShowRetweets && restrictToEnglish) {
             if (isEnglish) broadcastTweet();

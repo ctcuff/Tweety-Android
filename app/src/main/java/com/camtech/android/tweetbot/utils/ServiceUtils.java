@@ -3,16 +3,17 @@ package com.camtech.android.tweetbot.utils;
 import android.app.ActivityManager;
 import android.content.Context;
 
+import static android.app.ActivityManager.RunningServiceInfo;
+
 public class ServiceUtils {
 
     /**
-     * Checks if the given service is running
-     * @return true if it is, false otherwise
+     * Used to determine if a given service is running
      * */
     public static boolean isServiceRunning(Context context, Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
-            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
                 if (serviceClass.getName().equals(service.service.getClassName())) {
                     return true;
                 }

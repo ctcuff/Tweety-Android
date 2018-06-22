@@ -31,7 +31,6 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
     private int[] value;
     private ClickListener clickListener;
     private HashMap<String, Integer> hashMap;
-    private TwitterUtils utils;
     private Context context;
 
     public HistoryViewAdapter(Context context, HashMap<String, Integer> hashMap, ClickListener clickListener) {
@@ -53,7 +52,6 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
                 index++;
             }
         }
-        utils = new TwitterUtils();
     }
 
     @NonNull
@@ -78,7 +76,7 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
     private void removeCard(int position) {
         //Remove the selected card making sure to re-save the HashMap
         hashMap.remove(keyWord[position]);
-        utils.saveHashMap(hashMap);
+        TwitterUtils.saveHashMap(hashMap);
 
         keyWord = new String[hashMap.entrySet().size()];
         value = new int[hashMap.keySet().size()];

@@ -2,7 +2,9 @@ package com.camtech.android.tweetbot.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
@@ -23,10 +25,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
-import twitter4j.DirectMessage;
 import twitter4j.Twitter;
-import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
@@ -35,26 +38,22 @@ import twitter4j.conf.ConfigurationBuilder;
  * Contains various helper methods.
  */
 public class TwitterUtils {
-    private Twitter twitter;
-    private static final int DELAY = 1000;
     private static final String TAG = TwitterUtils.class.getSimpleName();
-    private HashMap<String, Integer> hashMap;
-    private final String FILE_NAME = "Occurrences.dat";
-    private final String FOLDER_NAME = "TweetData";
-
-    // Will open to the twitter website
-    public static final String BASE_TWITTER_URL = "https://twitter.com/";
-    // Will open the user's profile in the twitter app
-    public static final String BASE_TWITTER_URI = "twitter://user?screen_name=";
-    // Will open a specific tweet in the Twitter app
-    public static final String BASE_TWITTER_STATUS_URI = "twitter://status?status_id=";
-
-    public TwitterUtils() {
-    }
-
-    public TwitterUtils(Twitter twitter) {
-        this.twitter = twitter;
-    }
+    private static HashMap<String, Integer> hashMap;
+    private static final String FILE_NAME = "Occurrences.dat";
+    private static final String FOLDER_NAME = "TweetData";
+    /**
+     * Will open to the twitter website
+     */
+    private static final String BASE_TWITTER_URL = "https://twitter.com/";
+    /**
+     * Will open the user's profile in the twitter app
+     */
+    private static final String BASE_TWITTER_URI = "twitter://user?screen_name=";
+    /**
+     * Will open a specific tweet in the Twitter app
+     */
+    private static final String BASE_TWITTER_STATUS_URI = "twitter://status?status_id=";
 
     /**
      * Helper method to build the configuration
@@ -100,26 +99,12 @@ public class TwitterUtils {
 
         ConfigurationBuilder cb = new ConfigurationBuilder();
         cb.setDebugEnabled(true)
+                .setTweetModeExtended(true)
                 .setOAuthConsumerKey(Keys.CONSUMER_KEY)
                 .setOAuthConsumerSecret(Keys.CONSUMER_KEY_SECRET)
                 .setOAuthAccessToken(token)
                 .setOAuthAccessTokenSecret(tokenSecret);
         return new TwitterFactory(cb.build()).getInstance();
-    }
-
-    /**
-     * Sends a message to the specified user using the users screen name
-     */
-    public void sendMessage(String user, String message) {
-        try {
-            DirectMessage directMessage = twitter.sendDirectMessage(user, message);
-            Log.v(TAG, "-----------------------------------");
-            Log.v(TAG, "Sent:\n" + message + "\nTo @" + directMessage.getRecipientScreenName());
-            Log.v(TAG, "-----------------------------------");
-            sleep(DELAY);
-        } catch (TwitterException e) {
-            Log.v(TAG, "Error sending message" + e);
-        }
     }
 
     /**
@@ -129,11 +114,11 @@ public class TwitterUtils {
      * to the file.
      *
      * @param keyWord        The word to be saved to the hash map. This value
-     *                       should always be paired with it's number of occurrences
+     *                       should always be paired with its number of occurrences
      * @param numOccurrences The number of occurrences for the given word. The should
      *                       again match with the keyword
      */
-    public void saveHashMap(String keyWord, int numOccurrences) {
+    public static void saveHashMap(String keyWord, int numOccurrences) {
         String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME;
         File folder = new File(path);
         if (!folder.mkdir()) {
@@ -169,7 +154,7 @@ public class TwitterUtils {
      * Used to save an entire HashMap instead of
      * a single key value pair
      */
-    public void saveHashMap(HashMap<String, Integer> map) {
+    public static void saveHashMap(HashMap<String, Integer> map) {
         String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME;
         File folder = new File(path);
         if (!folder.mkdir()) {
@@ -197,7 +182,7 @@ public class TwitterUtils {
     /**
      * Returns the HashMap from storage if it exists.
      */
-    public HashMap<String, Integer> getHashMap() {
+    public static HashMap<String, Integer> getHashMap() {
         // This is where the map is saved
         String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME + "/" + FILE_NAME;
         try {
@@ -214,7 +199,7 @@ public class TwitterUtils {
      * Check to see if the given word exists
      * within the HashMap
      */
-    public boolean doesWordExist(String keyWord) {
+    public static boolean doesWordExist(String keyWord) {
         String path = Environment.getExternalStorageDirectory().toString() + "/" + FOLDER_NAME + "/" + FILE_NAME;
         try {
             // Check to see if the word exists in the HashMap file
@@ -248,18 +233,20 @@ public class TwitterUtils {
                 session.getAuthToken().token,
                 session.getAuthToken().secret);
 
-        Log.i(TAG, "handleTwitterSession: TOKEN " +  session.getAuthToken().token);
-        Log.i(TAG, "handleTwitterSession: TOKEN SECRET " +  session.getAuthToken().secret);
-
         auth.signInWithCredential(credential).addOnCompleteListener(activity, task -> {
             if (task.isSuccessful()) {
                 Log.i(TAG, "Auth: success");
                 // Store the access token and token secret in a shared preference so
                 // we can access different Twitter methods later
                 credentialsPref.edit()
-                        .putString(activity.getString(R.string.pref_token), session.getAuthToken().token)
-                        .putString(activity.getString(R.string.pref_token_secret), session.getAuthToken().secret)
+                        .putString(
+                                activity.getString(R.string.pref_token),
+                                session.getAuthToken().token)
+                        .putString(
+                                activity.getString(R.string.pref_token_secret),
+                                session.getAuthToken().secret)
                         .apply();
+                Toast.makeText(activity, "Successfully logged in", Toast.LENGTH_SHORT).show();
             } else {
                 Log.i(TAG, "Auth: failure ", task.getException());
                 Toast.makeText(activity, "Authentication failed.", Toast.LENGTH_SHORT).show();
@@ -280,13 +267,77 @@ public class TwitterUtils {
      * Logs a user out of Twitter (only if they aren't already logged out)
      * and clears the access token and access token secret from shared preferences.
      */
-    public static void logout() {
+    public static void logout(Context context) {
         if (isUserLoggedIn()) {
             FirebaseAuth.getInstance().signOut();
             TwitterCore.getInstance().getSessionManager().clearActiveSession();
-            // TODO clear out the shared preferences
+            // Gotta make sure to clear out the access tokens
+            // from shared preferences
+            SharedPreferences credentialsPref = context.getSharedPreferences(
+                    context.getString(R.string.pref_auth),
+                    Context.MODE_PRIVATE);
+            credentialsPref.edit().clear().apply();
+            Toast.makeText(context, "Successfully logged out", Toast.LENGTH_LONG).show();
         } else {
             Log.i(TAG, "User is already logged out!");
+        }
+    }
+
+    /**
+     * Gets rid of any URLs from a string. (Sometimes Twitter tweets/statuses have links)
+     * that are cut off making them un-clickable so it's best to just remove them)
+     */
+    public static String stripUrlFromMessage(String message) {
+        try {
+            String urlPattern = "((https?|ftp|gopher|telnet|file|Unsure|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?+-=\\\\.&])";
+            Pattern pattern = Pattern.compile(urlPattern, Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(message);
+            int i = 0;
+            while (matcher.find()) {
+                message = message.replaceAll(matcher.group(i), "").trim();
+                i++;
+            }
+        } catch (PatternSyntaxException e) {
+            e.printStackTrace();
+        }
+        return message;
+    }
+
+    /**
+     * Opens the profile of a user in the Twitter app if the user has Twitter
+     * installed or in a browser if the user doesn't have Twitter installed
+     */
+    public static void openUserProfile(Context context, String screenName) {
+        try {
+            // Opens the user in the Twitter app
+            context.startActivity(
+                    new Intent(Intent.ACTION_VIEW,
+                            Uri.parse(TwitterUtils.BASE_TWITTER_URI + screenName)));
+        } catch (Exception e) {
+            // The user doesn't have Twitter installed
+            //  so open to the Twitter website
+            context.startActivity(new Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(TwitterUtils.BASE_TWITTER_URL + screenName)));
+        }
+    }
+
+    /**
+     * Opens a status in the Twitter app if the user has Twitter installed or
+     * in a browser if the user doesn't have Twitter installed
+     */
+    public static void openStatus(Context context, String screenName, long statusId) {
+        try {
+            // Opens the status in the Twitter app
+            context.startActivity(new Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(TwitterUtils.BASE_TWITTER_STATUS_URI + statusId)));
+        } catch (Exception e) {
+            // The user doesn't have Twitter installed
+            // so open to the Twitter website
+            context.startActivity(new Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(TwitterUtils.createTwitterStatusUrlForWeb(screenName, statusId))));
         }
     }
 
@@ -296,15 +347,7 @@ public class TwitterUtils {
      * @param screenName The user of the status
      * @param statusId   The ID of the status
      */
-    public static String getTwitterStatusUrl(String screenName, long statusId) {
+    private static String createTwitterStatusUrlForWeb(String screenName, long statusId) {
         return String.format("https://twitter.com/%s/status/%s", screenName, String.valueOf(statusId));
-    }
-
-    public void sleep(long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 }

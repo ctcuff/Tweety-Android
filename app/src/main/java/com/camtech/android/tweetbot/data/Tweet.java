@@ -25,6 +25,7 @@ public class Tweet implements Parcelable {
     private String userProfilePic;
     private String message;
     private String keyWord;
+    private long id;
 
     /**
      * Constructs a new tweet object.
@@ -37,6 +38,7 @@ public class Tweet implements Parcelable {
      * @param userProfilePic  The small profile picture of the user.
      * @param message         The tweet text.
      * @param keyWord         The keyword that was used to filter the tweet.
+     * @param id              The id of the tweet
      */
     public Tweet(
             String date,
@@ -45,7 +47,8 @@ public class Tweet implements Parcelable {
             String userDescription,
             String userProfilePic,
             String message,
-            String keyWord) {
+            String keyWord,
+            long id) {
 
         this.date = date;
         this.screenName = screenName;
@@ -54,19 +57,19 @@ public class Tweet implements Parcelable {
         this.userProfilePic = userProfilePic;
         this.message = message;
         this.keyWord = keyWord;
+        this.id = id;
     }
 
-    private Tweet(Parcel in) {
-        String[] data = new String[7];
-        in.readStringArray(data);
 
-        this.date = data[0];
-        this.screenName = data[1];
-        this.name = data[2];
-        this.userDescription = data[3];
-        this.userProfilePic = data[4];
-        this.message = data[5];
-        this.keyWord = data[6];
+    private Tweet(Parcel in) {
+        date = in.readString();
+        screenName = in.readString();
+        name = in.readString();
+        userDescription = in.readString();
+        userProfilePic = in.readString();
+        message = in.readString();
+        keyWord = in.readString();
+        id = in.readLong();
     }
 
     @Override
@@ -76,14 +79,14 @@ public class Tweet implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-            dest.writeStringArray(new String[]{
-                    this.date,
-                    this.screenName,
-                    this.name,
-                    this.userDescription,
-                    this.userProfilePic,
-                    this.message,
-                    this.keyWord});
+        dest.writeString(date);
+        dest.writeString(screenName);
+        dest.writeString(name);
+        dest.writeString(userDescription);
+        dest.writeString(userProfilePic);
+        dest.writeString(message);
+        dest.writeString(keyWord);
+        dest.writeLong(id);
     }
 
     public static final Creator<Tweet> CREATOR = new Creator<Tweet>() {
@@ -106,6 +109,7 @@ public class Tweet implements Parcelable {
         return screenName;
     }
 
+
     public String getName() {
         return name;
     }
@@ -126,4 +130,7 @@ public class Tweet implements Parcelable {
         return this.keyWord;
     }
 
+    public long getId() {
+        return id;
+    }
 }

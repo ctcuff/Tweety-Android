@@ -43,7 +43,6 @@ public class TwitterService extends Service {
     private NotificationManager notificationManager;
     private NotificationCompat.Builder builder;
     private ConnectivityReceiver connectivityReceiver;
-    private TwitterUtils utils;
 
     public static final String BROADCAST_UPDATE = "updateServiceStatus";
     public static final int ID_BOT_CONNECTED = 0;
@@ -62,7 +61,6 @@ public class TwitterService extends Service {
         registerReceiver(connectivityReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         // Receiver to listen for when the notification is clicked
         registerReceiver(stopServiceReceiver, new IntentFilter(INTENT_STOP_SERVICE));
-        utils = new TwitterUtils();
     }
 
     @Override
@@ -167,7 +165,7 @@ public class TwitterService extends Service {
         SharedPreferences numOccurrencesPref = getSharedPreferences(getString(R.string.pref_num_occurrences), MODE_PRIVATE);
         keyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
         int numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
-        utils.saveHashMap(keyWord, numOccurrences);
+        TwitterUtils.saveHashMap(keyWord, numOccurrences);
     }
 
     public boolean hasConnection() {

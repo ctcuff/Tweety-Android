@@ -30,7 +30,6 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     private String[] keyWord;
     private int[] value;
     private HashMap<String, Integer> hashMap;
-    private TwitterUtils utils;
     private HistoryViewAdapter viewAdapter;
 
     @BindView(R.id.tv_no_history) TextView tvNoHistory;
@@ -50,8 +49,6 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         setTitle("History");
         toolbar.setTitleTextColor(Color.WHITE);
 
-        utils = new TwitterUtils();
-
         LinearLayoutManager manager = new LinearLayoutManager(this);
 
         recyclerView.setLayoutManager(manager);
@@ -61,7 +58,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         // and save the key-value pairs to an array. This is so that
         // the keyword and it's number of occurrences can be displayed
         // by the OccurrencesFragment when a word is clicked
-        hashMap = utils.getHashMap();
+        hashMap = TwitterUtils.getHashMap();
         if (hashMap != null && !hashMap.isEmpty()) {
             tvNoHistory.setVisibility(View.GONE);
             keyWord = new String[hashMap.entrySet().size()];
@@ -125,7 +122,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         builder.setMessage("Are you want to clear your history? This can't be undone!");
         builder.setPositiveButton("YES", (dialog, which) -> {
             hashMap.clear();
-            utils.saveHashMap(hashMap);
+            TwitterUtils.saveHashMap(hashMap);
             viewAdapter.resetAdapter(hashMap);
             tvNoHistory.setVisibility(View.VISIBLE);
         });

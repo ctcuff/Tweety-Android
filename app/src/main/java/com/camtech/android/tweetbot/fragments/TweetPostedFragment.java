@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -23,7 +22,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.adapters.StatusViewAdapter;
+import com.camtech.android.tweetbot.adapters.TweetViewAdapter;
 import com.camtech.android.tweetbot.data.Tweet;
 import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
@@ -39,10 +38,10 @@ import twitter4j.Status;
  * Handles displaying each tweet when received
  * See {@link StreamListener#onStatus(Status)}
  */
-public class TweetPostedFragment extends Fragment implements StatusViewAdapter.OnItemClickedListener {
+public class TweetPostedFragment extends Fragment implements TweetViewAdapter.OnItemClickedListener {
 
     private final String TAG = TweetPostedFragment.class.getSimpleName();
-    private StatusViewAdapter viewAdapter;
+    private TweetViewAdapter viewAdapter;
     private ArrayList<Tweet> tweets;
     private boolean isRecyclerViewAtBottom;
     private String currentKeyWord;
@@ -58,7 +57,7 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.status_posted_fragment, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_status_posted, container, false);
         ButterKnife.bind(this, rootView);
 
         // Scroll to the bottom of the recycler view when the fab is clicked
@@ -88,7 +87,7 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
                 ? new ArrayList<>()
                 : savedInstanceState.getParcelableArrayList(TAG);
 
-        viewAdapter = new StatusViewAdapter(getContext(), tweets);
+        viewAdapter = new TweetViewAdapter(getContext(), tweets);
         viewAdapter.setOnItemClickedListener(this);
 
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
@@ -185,22 +184,25 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
     @Override
     public void onItemClicked(View v, Tweet tweet, int position) {
         switch (v.getId()) {
-            // Username was clicked
-            case R.id.status_user:
-                openUserProfile(position);
-                break;
             // CardView card was clicked but we also have to check the other
             // views to make sure the click registers
             case R.id.root:
             case R.id.status_date:
             case R.id.status_message:
+                // Open this status in the Twitter app or website
+                TwitterUtils.openStatus(getContext(),tweet.getScreenName(), tweet.getId());
+                break;
+            // Username was clicked
+            case R.id.status_user:
+                // Opens a bottom sheet dialog showing the user's profile picture
+                // along with a button to open the user's profile page
                 View dialogSheet = getLayoutInflater().inflate(R.layout.bottom_sheet_dialog, null);
 
                 ImageView userProfilePic = dialogSheet.findViewById(R.id.iv_user_profile_pic);
                 Picasso.get().load(tweet.getUserProfilePic()).into(userProfilePic);
 
                 Button viewProfile = dialogSheet.findViewById(R.id.bt_view_profile);
-                viewProfile.setOnClickListener(view -> openUserProfile(position));
+                viewProfile.setOnClickListener(view -> TwitterUtils.openUserProfile(getContext(), tweet.getScreenName()));
 
                 TextView screenName = dialogSheet.findViewById(R.id.tv_tweet_screen_name);
                 screenName.setText(getString(R.string.status_user, tweet.getScreenName()));
@@ -253,19 +255,4 @@ public class TweetPostedFragment extends Fragment implements StatusViewAdapter.O
             }
         }
     };
-
-    private void openUserProfile(int position) {
-        try {
-            // Opens the user in the Twitter app
-            startActivity(
-                    new Intent(Intent.ACTION_VIEW,
-                    Uri.parse(TwitterUtils.BASE_TWITTER_URI + tweets.get(position).getScreenName())));
-        } catch (Exception e) {
-            // The user doesn't have Twitter installed
-            //  so open to the Twitter website
-            startActivity(new Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse(TwitterUtils.BASE_TWITTER_URL + tweets.get(position).getScreenName())));
-        }
-    }
 }

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
@@ -14,10 +14,17 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
     </style>
 
     <style name="ToolbarTheme"  parent="ThemeOverlay.AppCompat.Dark.ActionBar">
         <item name="colorControlNormal">#ffffff</item>
+    </style>
+
+    <style name="ButtonElevated">
+        <item name="android:translationZ" tools:ignore="NewApi">8dp</item>
+        <item name="android:stateListAnimator" tools:ignore="NewApi">@null</item>
+        <item name="android:elevation" tools:ignore="NewApi">8dp</item>
     </style>
 
 </resources>

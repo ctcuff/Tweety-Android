@@ -30,17 +30,12 @@ import android.widget.Toast;
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
 import com.camtech.android.tweetbot.activities.SettingsActivity;
-import com.camtech.android.tweetbot.data.Keys;
 import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.tweet.TwitterService;
 import com.camtech.android.tweetbot.utils.ServiceUtils;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
-import com.google.firebase.auth.FirebaseAuth;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
-import com.twitter.sdk.android.core.Twitter;
-import com.twitter.sdk.android.core.TwitterAuthConfig;
-import com.twitter.sdk.android.core.TwitterConfig;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.identity.TwitterLoginButton;
@@ -57,17 +52,13 @@ import twitter4j.Status;
 public class OccurrencesFragment extends Fragment {
 
     private final String TAG = OccurrencesFragment.class.getSimpleName();
-    public static final String OCCURRENCES = "occurrences";
     private int numOccurrences;
     private String keyWord;
     private SharedPreferences keywordPref;
     private SharedPreferences numOccurrencesPref;
-    private SharedPreferences credentialsPref;
-    private TwitterUtils utils;
     private AlertDialog resetKeyWordDialog;
     private AlertDialog resetOccurrencesDialog;
     private AlertDialog loginDialog;
-    private FirebaseAuth auth;
     public TwitterLoginButton twitterLoginButton;
 
     @BindView(R.id.bt_start_stop) Button startStop;
@@ -79,12 +70,9 @@ public class OccurrencesFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.occurrences_fragment, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_occurrences, container, false);
         ButterKnife.bind(this, rootView);
-        utils = new TwitterUtils();
-        auth = FirebaseAuth.getInstance();
 
-        credentialsPref = getContext().getSharedPreferences(getString(R.string.pref_auth), Context.MODE_PRIVATE);
         keywordPref = getContext().getSharedPreferences(getString(R.string.pref_keyword), Context.MODE_PRIVATE);
         numOccurrencesPref = getContext().getSharedPreferences(getString(R.string.pref_num_occurrences), Context.MODE_PRIVATE);
         keyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
@@ -114,7 +102,7 @@ public class OccurrencesFragment extends Fragment {
                     numOccurrencesPref.edit().putInt(getString(R.string.pref_num_occurrences), 0).apply();
                     numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
                     tvNumOccurrences.setText(String.valueOf(numOccurrences));
-                    utils.saveHashMap(keyWord, 0);
+                    TwitterUtils.saveHashMap(keyWord, 0);
                 });
                 builder.setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
                 resetOccurrencesDialog = builder.create();
@@ -171,11 +159,11 @@ public class OccurrencesFragment extends Fragment {
 
         // If the key word has been deleted from history, the number
         // of occurrences the TextView should be reset to 0
-        if (!utils.doesWordExist(keyWord)) {
+        if (!TwitterUtils.doesWordExist(keyWord)) {
             tvNumOccurrences.setText("0");
         } else {
-            // A card was clicked so we need to update the text views
-            // to that clicked word
+            // A card from the history activity was clicked
+            // so we need to update the text views to that clicked word
             numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
             tvNumOccurrences.setText(String.valueOf(numOccurrences));
             tvKeyword.setText(getString(R.string.tv_keyword, keyWord));
@@ -213,17 +201,17 @@ public class OccurrencesFragment extends Fragment {
     private void changeKeyword() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
 
-        LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.change_keyword_dialog, getView().findViewById(R.id.dialog_layout));
-
-        builder.setView(view);
+        View view = getLayoutInflater().inflate(
+                R.layout.change_keyword_dialog,
+                getView().findViewById(R.id.dialog_layout_root));
 
         EditText changeKeyword = view.findViewById(R.id.et_query);
         TextInputLayout textInputLayout = view.findViewById(R.id.text_input_layout);
         textInputLayout.setHint("Keyword");
 
-        builder.setCancelable(false);
-        builder.setTitle("Change Keyword")
+        builder.setView(view)
+                .setCancelable(false)
+                .setTitle("Change Keyword")
                 .setPositiveButton("OK", (dialog, which) -> {
                     // Even though there's no code here, this is used to make sure
                     // the "OK" button shows up on the dialog
@@ -247,8 +235,9 @@ public class OccurrencesFragment extends Fragment {
                     tvKeyword.setText(getString(R.string.tv_keyword, keyWordFromTextView));
 
                     // The keyword exists so we set the counter to the value of the keyword
-                    if (utils.doesWordExist(keyWordFromTextView)) {
-                        numOccurrencesPref.edit().putInt(getString(R.string.pref_num_occurrences), utils.getHashMap().get(keyWordFromTextView)).apply();
+                    if (TwitterUtils.doesWordExist(keyWordFromTextView)) {
+                        numOccurrencesPref.edit().putInt(
+                                getString(R.string.pref_num_occurrences), TwitterUtils.getHashMap().get(keyWordFromTextView)).apply();
                         numOccurrences = numOccurrencesPref.getInt(getString(R.string.pref_num_occurrences), 0);
                         tvNumOccurrences.setText(String.valueOf(numOccurrences));
                     } else {
@@ -313,7 +302,9 @@ public class OccurrencesFragment extends Fragment {
     }
 
     private void showLoginDialog() {
-        View v = getActivity().getLayoutInflater().inflate(R.layout.dialog_login, null);
+        View v = getLayoutInflater().inflate(
+                R.layout.dialog_login,
+                getView().findViewById(R.id.dialog_layout_root));
         twitterLoginButton = v.findViewById(R.id.twitter_login);
         twitterLoginButton.setCallback(new Callback<TwitterSession>() {
             @Override

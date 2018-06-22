@@ -29,8 +29,6 @@ import java.util.Map;
 
 public class GraphActivity extends AppCompatActivity {
 
-    private final float TEXT_SIZE = 14f;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,8 +36,6 @@ public class GraphActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
-
-        TwitterUtils utils = new TwitterUtils();
 
         ImageView emptyGraphImage = findViewById(R.id.graph_icon);
         TextView emptyGraphText = findViewById(R.id.graph_text);
@@ -51,7 +47,7 @@ public class GraphActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
         // Get the stored HashMap if it exists
-        HashMap<String, Integer> hashMap = utils.getHashMap();
+        HashMap<String, Integer> hashMap = TwitterUtils.getHashMap();
         if (hashMap == null) {
             // There's no data, so show the empty view
             emptyGraphImage.setVisibility(View.VISIBLE);
@@ -79,10 +75,11 @@ public class GraphActivity extends AppCompatActivity {
             }
 
             BarDataSet barDataSet = new BarDataSet(entries, "Occurrences");
-            barDataSet.setColor(R.color.colorOccurrences);
+            barDataSet.setColor(getResources().getColor(R.color.colorOccurrences));
 
             BarData barData = new BarData(barDataSet);
             barData.setBarWidth(0.50f);
+            final float TEXT_SIZE = 14f;
             barData.setValueTextSize(TEXT_SIZE);
             barData.setValueFormatter(new IValueFormatter() {
                 @Override

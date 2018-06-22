@@ -64,5 +64,6 @@
     <string name="user_not_exists">User does not exit</string>
     <string name="empty_statuses">No statuses to show</string>
     <string name="initial_status_text">Statuses will appear here</string>
+    <string name="date_format">EEE, MMMM d, yyyy hh:mm aaa</string>
 
 </resources>
