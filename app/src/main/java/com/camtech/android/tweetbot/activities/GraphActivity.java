@@ -1,8 +1,9 @@
 package com.camtech.android.tweetbot.activities;
 
 import android.content.res.Configuration;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v4.util.Pair;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -10,7 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.utils.TwitterUtils;
+import com.camtech.android.tweetbot.utils.DbUtils;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
@@ -18,14 +19,10 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.formatter.IValueFormatter;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 public class GraphActivity extends AppCompatActivity {
 
@@ -47,9 +44,9 @@ public class GraphActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
         // Get the stored HashMap if it exists
-        HashMap<String, Integer> hashMap = TwitterUtils.getHashMap();
-        if (hashMap == null) {
-            // There's no data, so show the empty view
+        List<Pair<String, Integer>> pairs = DbUtils.getAllKeyWords(this, null);
+        if (pairs == null) {
+            // There's no models, so show the empty view
             emptyGraphImage.setVisibility(View.VISIBLE);
             emptyGraphText.setVisibility(View.VISIBLE);
             chart.setVisibility(View.GONE);
@@ -57,20 +54,16 @@ public class GraphActivity extends AppCompatActivity {
             emptyGraphImage.setVisibility(View.INVISIBLE);
             emptyGraphText.setVisibility(View.INVISIBLE);
 
-            // Extract the keyword and number of occurrences from
-            // the hash map to display on the graph
-            String[] keyWord = new String[hashMap.entrySet().size()];
-            int[] value = new int[hashMap.keySet().size()];
+            String[] keyWord = new String[pairs.size()];
             ArrayList<BarEntry> entries = new ArrayList<>();
 
             int index = 0;
-            for (Map.Entry<String, Integer> map : hashMap.entrySet()) {
+            for (Pair<String, Integer> pair : pairs) {
                 // Add each keyword and the number of occurrences to the bar graph.
                 // The keyword will be displayed underneath each bar and the
                 // number of occurrences will be displayed on top.
-                keyWord[index] = map.getKey();
-                value[index] = map.getValue();
-                entries.add(new BarEntry(index, value[index]));
+                keyWord[index] = pair.first;
+                entries.add(new BarEntry(index, pair.second != null ? pair.second : 0));
                 index++;
             }
 
@@ -81,12 +74,7 @@ public class GraphActivity extends AppCompatActivity {
             barData.setBarWidth(0.50f);
             final float TEXT_SIZE = 14f;
             barData.setValueTextSize(TEXT_SIZE);
-            barData.setValueFormatter(new IValueFormatter() {
-                @Override
-                public String getFormattedValue(float value1, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
-                    return "" + ((int) value1);
-                }
-            });
+            barData.setValueFormatter((value1, entry, dataSetIndex, viewPortHandler) -> String.valueOf((int) value1));
 
             XAxis xAxis = chart.getXAxis();
             xAxis.setGranularity(1f);

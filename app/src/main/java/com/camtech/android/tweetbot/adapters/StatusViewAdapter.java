@@ -11,7 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.data.ParcelableStatus;
+import com.camtech.android.tweetbot.models.ParcelableStatus;
 
 import java.util.List;
 

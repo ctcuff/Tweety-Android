@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <bool name="pref_show_retweets">true</bool>
-    <bool name="pref_english_only">false</bool>
+    <bool name="pref_show_retweets_streaming">true</bool>
+    <bool name="pref_english_only_streaming">false</bool>
+    <bool name="pref_show_retweets_status">true</bool>
 </resources>

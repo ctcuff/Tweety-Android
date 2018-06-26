@@ -7,15 +7,14 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.preference.PreferenceManager;
 import android.text.format.DateFormat;
 import android.util.Log;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.data.Tweet;
-import com.camtech.android.tweetbot.utils.TwitterUtils;
-
-import java.util.HashMap;
+import com.camtech.android.tweetbot.models.Tweet;
+import com.camtech.android.tweetbot.utils.DbUtils;
 
 import twitter4j.DirectMessage;
 import twitter4j.StallWarning;
@@ -39,27 +38,25 @@ public class StreamListener implements UserStreamListener {
     private String keyWord;
     private SharedPreferences sharedPreferences;
 
-    public static final String LISTENER_BROADCAST = "occurrences";
+    public static final String OCCURRENCES_INTENT_FILTER = "occurrences";
     public static final String NEW_TWEET_BROADCAST = "tweet";
-    public static final String NUM_OCCURRENCES_BROADCAST = "number";
+    public static final String NUM_OCCURRENCES_EXTRA = "number";
 
     /**
      * Constructor used to show the occurrences of a given word.
      * Mainly used in {@link #onStatus(Status)}
      */
     StreamListener(Context context, String keyWord) {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         this.context = context;
         this.keyWord = keyWord;
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         // Check to see if the key word is new. If it is,
         // set the number of occurrences to 0. If it's not, get
-        // the value from the saved HashMap.
-        HashMap<String, Integer> hashMap = TwitterUtils.getHashMap();
-        wordCount = hashMap != null && TwitterUtils.doesWordExist(keyWord)
-                ? hashMap.get(keyWord)
-                : 0;
+        // the value from the database.
+        Pair<String, Integer> pair = DbUtils.getPair(context, keyWord);
+        wordCount = pair != null && pair.second != null ? pair.second : 0;
         // Intent to update the text in Occurrences/Messages fragment
-        intentUpdateUI = new Intent(LISTENER_BROADCAST);
+        intentUpdateUI = new Intent(OCCURRENCES_INTENT_FILTER);
     }
 
     public void onDeletionNotice(long l, long l1) {
@@ -159,13 +156,14 @@ public class StreamListener implements UserStreamListener {
         // Check to see if the tweet was in English
         boolean isEnglish = status.getLang().equals("en");
         // Load the boolean values from the checkbox preference in the settings fragment
-        boolean canShowRetweets = sharedPreferences.getBoolean(context.getString(R.string.pref_show_retweets_key),
-                context.getResources().getBoolean(R.bool.pref_show_retweets));
+        boolean canShowRetweets = sharedPreferences.getBoolean(context.getString(R.string.pref_show_retweet_streaming_key),
+                context.getResources().getBoolean(R.bool.pref_show_retweets_streaming));
         boolean restrictToEnglish = sharedPreferences.getBoolean(context.getString(R.string.pref_english_only_key),
-                context.getResources().getBoolean(R.bool.pref_english_only));
+                context.getResources().getBoolean(R.bool.pref_english_only_streaming));
 
         // Package the tweet into an intent so it can be sent via broadcast
-        intentUpdateUI.putExtra(NEW_TWEET_BROADCAST,
+        intentUpdateUI.putExtra(
+                NEW_TWEET_BROADCAST,
                 new Tweet(date, screenName, name, userDescription, userProfilePic, message, keyWord, id));
 
         if (canShowRetweets && restrictToEnglish) {
@@ -181,7 +179,7 @@ public class StreamListener implements UserStreamListener {
         }
 
         if (canShowRetweets && !restrictToEnglish) {
-           broadcastTweet();
+            broadcastTweet();
         }
 
     }
@@ -189,7 +187,7 @@ public class StreamListener implements UserStreamListener {
     private void broadcastTweet() {
         wordCount++;
         // Send the word count to the fragments so that the UI updates
-        intentUpdateUI.putExtra(NUM_OCCURRENCES_BROADCAST, wordCount);
+        intentUpdateUI.putExtra(NUM_OCCURRENCES_EXTRA, wordCount);
         // Send the tweet received to the TweetPostedFragment
         context.sendBroadcast(intentUpdateUI);
     }
@@ -224,7 +222,7 @@ public class StreamListener implements UserStreamListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
         }
-        // If there's no mobile data, we want to only show
+        // If there's no mobile models, we want to only show
         // the notification in the TwitterService
         if (!error.getMessage().contains("Unable to resolve host")) {
             // Error 402 occurs when there are too many auth

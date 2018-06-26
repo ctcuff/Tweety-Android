@@ -11,11 +11,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.data.Tweet;
 import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
+import com.camtech.android.tweetbot.models.Tweet;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -25,11 +25,11 @@ import butterknife.ButterKnife;
  * to display each tweet.
  */
 public class TweetViewAdapter extends RecyclerView.Adapter<TweetViewAdapter.ViewHolder> {
-    private ArrayList<Tweet> tweets;
+    private List<Tweet> tweets;
     private Context context;
     private OnItemClickedListener onItemClickListener;
 
-    public TweetViewAdapter(Context context, ArrayList<Tweet> tweets) {
+    public TweetViewAdapter(Context context, List<Tweet> tweets) {
         this.context = context;
         this.tweets = tweets;
     }
@@ -55,7 +55,7 @@ public class TweetViewAdapter extends RecyclerView.Adapter<TweetViewAdapter.View
         return tweets.size();
     }
 
-    public void clear(ArrayList<Tweet> tweets) {
+    public void reset(List<Tweet> tweets) {
         this.tweets = tweets;
         notifyDataSetChanged();
     }

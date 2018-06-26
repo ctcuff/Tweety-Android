@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/colorPrimary"
     android:orientation="vertical">
 
@@ -25,14 +26,46 @@
             android:textSize="30sp" />
     </FrameLayout>
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:fabSize="mini"
-        android:src="@drawable/ic_arrow_downward"
-        android:layout_gravity="end|bottom"
-        android:layout_margin="22dp"
-        app:backgroundTint="#FFFFFF" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp">
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_clear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom"
+            android:layout_marginBottom="67dp"
+            android:src="@drawable/ic_close_black_24dp"
+            android:visibility="visible"
+            app:backgroundTint="#FFFFFF"
+            app:fabSize="mini"
+            tools:visibility="visible" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_scroll_to_bottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom"
+            android:layout_marginBottom="16dp"
+            android:src="@drawable/ic_arrow_downward_black_24dp"
+            android:visibility="visible"
+            app:backgroundTint="#FFFFFF"
+            app:fabSize="mini"
+            tools:visibility="visible" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_scroll_to_top"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom"
+            android:layout_marginBottom="16dp"
+            android:src="@drawable/ic_arrow_upward_black_24dp"
+            android:visibility="gone"
+            app:backgroundTint="#FFFFFF"
+            app:fabSize="mini" />
+    </FrameLayout>
 
 </android.support.design.widget.CoordinatorLayout>

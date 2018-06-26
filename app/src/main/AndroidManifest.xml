@@ -4,8 +4,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
@@ -15,9 +13,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activities.MainActivity">
+        <activity
+            android:name=".activities.MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -25,10 +26,17 @@
             android:name=".activities.HistoryActivity"
             android:theme="@style/NoActionBar" />
         <activity android:name=".activities.GraphActivity" />
+        <activity android:name=".activities.SettingsActivity" />
         <activity
-            android:name=".activities.SettingsActivity"/>
+            android:name="com.twitter.sdk.android.core.identity.OAuthActivity"
+            android:configChanges="orientation|screenSize" />
 
         <service android:name=".tweet.TwitterService" />
+
+        <provider
+            android:name=".data.HistoryContentProvider"
+            android:authorities="@string/content_authority"
+            android:exported="false" />
 
     </application>
 

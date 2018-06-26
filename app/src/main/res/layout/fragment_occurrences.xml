@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/colorOccurrences"
     android:orientation="horizontal"
+    android:id="@+id/fragment_occurrence_root"
     tools:context="com.camtech.android.tweetbot.fragments.OccurrencesFragment">
 
 

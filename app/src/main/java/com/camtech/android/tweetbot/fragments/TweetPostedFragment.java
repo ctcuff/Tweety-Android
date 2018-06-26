@@ -1,11 +1,9 @@
 package com.camtech.android.tweetbot.fragments;
 
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -23,7 +21,7 @@ import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.adapters.TweetViewAdapter;
-import com.camtech.android.tweetbot.data.Tweet;
+import com.camtech.android.tweetbot.models.Tweet;
 import com.camtech.android.tweetbot.tweet.StreamListener;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.squareup.picasso.Picasso;
@@ -41,18 +39,18 @@ import twitter4j.Status;
 public class TweetPostedFragment extends Fragment implements TweetViewAdapter.OnItemClickedListener {
 
     private final String TAG = TweetPostedFragment.class.getSimpleName();
+    private final String CURRENT_KEYWORD_KEY = "currentKeyWord";
     private TweetViewAdapter viewAdapter;
     private ArrayList<Tweet> tweets;
     private boolean isRecyclerViewAtBottom;
-    private String currentKeyWord;
-    private SharedPreferences keywordPref;
-    private AlertDialog clearStatusesDialog;
+    private static String currentKeyWord;
     private BottomSheetDialog bottomSheetDialog;
 
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
     @BindView(R.id.empty_view) TextView emptyView;
-    @BindView(R.id.fab) FloatingActionButton fab;
-
+    @BindView(R.id.fab_clear) FloatingActionButton fabClear;
+    @BindView(R.id.fab_scroll_to_bottom) FloatingActionButton fabScrollToBottom;
+    @BindView(R.id.fab_scroll_to_top) FloatingActionButton fabScrollToTop;
 
     @Nullable
     @Override
@@ -60,46 +58,36 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
         View rootView = inflater.inflate(R.layout.fragment_status_posted, container, false);
         ButterKnife.bind(this, rootView);
 
-        // Scroll to the bottom of the recycler view when the fab is clicked
-        fab.setOnClickListener(v -> recyclerView.smoothScrollToPosition(tweets.size()));
-        // Open a dialog to clear the screen when the FAB is long clicked
-        fab.setOnLongClickListener(v -> {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-            builder.setMessage("Clear statuses?");
-            builder.setPositiveButton("YES", (dialog, which) -> {
-                tweets = new ArrayList<>();
-                viewAdapter.clear(tweets);
-            });
-            builder.setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
-            clearStatusesDialog = builder.create();
-            clearStatusesDialog.show();
+        fabScrollToBottom.setOnClickListener(v -> recyclerView.smoothScrollToPosition(tweets.size()));
+        fabScrollToTop.setOnClickListener(v -> recyclerView.smoothScrollToPosition(0));
+        fabClear.setOnClickListener(v -> {
+            tweets = new ArrayList<>();
+            viewAdapter.reset(tweets);
             emptyView.setVisibility(View.VISIBLE);
-            return true;
         });
-
-        keywordPref = getContext().getSharedPreferences(getString(R.string.pref_keyword), Context.MODE_PRIVATE);
-        currentKeyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
 
         // Re-load the array list from the saved state. This happens when
         // the device is rotated or in the event that the user leaves the
-        // app then re-opens it.
-        tweets = savedInstanceState == null
-                ? new ArrayList<>()
-                : savedInstanceState.getParcelableArrayList(TAG);
-
+        // app then re-opens it. We also have to keep track of the current
+        // key word so that the adapter knows when to reset the list
+        if (savedInstanceState == null) {
+            tweets = new ArrayList<>();
+            currentKeyWord = "";
+        } else {
+            tweets = savedInstanceState.getParcelableArrayList(TAG);
+            currentKeyWord = savedInstanceState.getString(CURRENT_KEYWORD_KEY);
+        }
         viewAdapter = new TweetViewAdapter(getContext(), tweets);
         viewAdapter.setOnItemClickedListener(this);
 
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         //This makes sure that the newest cards appear at the bottom
         manager.setStackFromEnd(true);
-
         // The recycler view should stretch each item
         // to fit all the text of each card
         recyclerView.setHasFixedSize(false);
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(viewAdapter);
-
         // Used to listen for when the RecyclerView reaches the bottom
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -112,11 +100,16 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                // Used to hide the FAB when the recycler view is scrolled up vertically
-                if (dy > 0 && fab.getVisibility() != View.VISIBLE) {
-                    fab.show();
-                } else if (dy < 0 && fab.getVisibility() == View.VISIBLE) {
-                    fab.hide();
+                // Hide/show different floating action buttons depending
+                // on which direction we're scrolling
+                if (dy > 0 && fabClear.getVisibility() != View.VISIBLE && fabScrollToBottom.getVisibility() != View.VISIBLE) {
+                    fabClear.show();
+                    fabScrollToBottom.show();
+                    fabScrollToTop.hide();
+                } else if (dy < 0 && fabClear.getVisibility() == View.VISIBLE && fabScrollToBottom.getVisibility() == View.VISIBLE) {
+                    fabScrollToTop.show();
+                    fabClear.hide();
+                    fabScrollToBottom.hide();
                 }
             }
         });
@@ -129,6 +122,7 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
         // The max (approximate) number of tweets that can be saved before a
         // TransactionTooLargeException is thrown
         final int MAX_PARCEL_SIZE = 500;
@@ -150,20 +144,20 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
             }
             outState.putParcelableArrayList(TAG, mostRecentTweets);
         }
-        super.onSaveInstanceState(outState);
+        outState.putString(CURRENT_KEYWORD_KEY, currentKeyWord);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         //Receiver to listen for new tweets
-        getContext().registerReceiver(tweetPostedReceiver, new IntentFilter(StreamListener.LISTENER_BROADCAST));
+        requireContext().registerReceiver(tweetPostedReceiver, new IntentFilter(StreamListener.OCCURRENCES_INTENT_FILTER));
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getContext().unregisterReceiver(tweetPostedReceiver);
+        requireContext().unregisterReceiver(tweetPostedReceiver);
     }
 
     @Override
@@ -172,10 +166,6 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
         // Since AS gets mad about window leaks, we need to make sure
         // any dialog is cancelled if the device is rotated, or some other
         // event occurs
-        if (clearStatusesDialog != null) {
-            clearStatusesDialog.dismiss();
-        }
-
         if (bottomSheetDialog != null) {
             bottomSheetDialog.dismiss();
         }
@@ -190,13 +180,15 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
             case R.id.status_date:
             case R.id.status_message:
                 // Open this status in the Twitter app or website
-                TwitterUtils.openStatus(getContext(),tweet.getScreenName(), tweet.getId());
+                TwitterUtils.openStatus(getContext(), tweet.getScreenName(), tweet.getId());
                 break;
             // Username was clicked
             case R.id.status_user:
                 // Opens a bottom sheet dialog showing the user's profile picture
                 // along with a button to open the user's profile page
-                View dialogSheet = getLayoutInflater().inflate(R.layout.bottom_sheet_dialog, null);
+                View dialogSheet = getLayoutInflater().inflate(
+                        R.layout.bottom_sheet_dialog,
+                        getView().findViewById(R.id.bottom_sheet_root));
 
                 ImageView userProfilePic = dialogSheet.findViewById(R.id.iv_user_profile_pic);
                 Picasso.get().load(tweet.getUserProfilePic()).into(userProfilePic);
@@ -214,7 +206,7 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
                 if (tweet.getUserDescription() == null) userDescription.setVisibility(View.GONE);
                 else userDescription.setText(tweet.getUserDescription());
 
-                bottomSheetDialog = new BottomSheetDialog(getContext());
+                bottomSheetDialog = new BottomSheetDialog(requireContext());
                 bottomSheetDialog.setContentView(dialogSheet);
                 bottomSheetDialog.show();
                 break;
@@ -231,7 +223,6 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
             if (intent.getExtras() != null) {
                 // Get the tweet object passed from the stream listener
                 Tweet tweet = intent.getExtras().getParcelable(StreamListener.NEW_TWEET_BROADCAST);
-
                 // If the keyword has changed, we need to reset the recycler view
                 // so the screen doesn't get too crowded
                 if (tweet != null && currentKeyWord.equals(tweet.getKeyWord())) {
@@ -240,9 +231,9 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
                 } else {
                     // The keyword has changed so we reset
                     // the array list and the adapter
-                    currentKeyWord = keywordPref.getString(getString(R.string.pref_keyword), getString(R.string.pref_default_keyword));
+                    currentKeyWord = tweet != null ? tweet.getKeyWord() : "";
                     tweets = new ArrayList<>();
-                    viewAdapter.clear(tweets);
+                    viewAdapter.reset(tweets);
 
                     tweets.add(tweet);
                     viewAdapter.notifyItemInserted(tweets.size() - 1);

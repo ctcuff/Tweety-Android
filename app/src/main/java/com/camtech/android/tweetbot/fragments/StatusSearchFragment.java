@@ -2,6 +2,8 @@ package com.camtech.android.tweetbot.fragments;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -9,9 +11,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -23,11 +27,13 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
+import com.camtech.android.tweetbot.activities.SettingsActivity;
 import com.camtech.android.tweetbot.adapters.StatusViewAdapter;
-import com.camtech.android.tweetbot.data.ParcelableStatus;
+import com.camtech.android.tweetbot.models.ParcelableStatus;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.github.pwittchen.infinitescroll.library.InfiniteScrollListener;
 import com.squareup.picasso.Picasso;
@@ -56,6 +62,7 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
     private boolean isLoading;
     private boolean isLastPage;
     private BottomSheetDialog bottomSheetDialog;
+    private SharedPreferences settings;
 
     @BindView(R.id.tv_user_search) TextView userSearch;
     @BindView(R.id.rv_status_search) RecyclerView recyclerView;
@@ -65,17 +72,17 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
     @BindView(R.id.fab_scroll_to_top) FloatingActionButton fabScrollToTop;
     @BindView(R.id.tv_empty_statuses) TextView emptyStatuses;
     @BindView(R.id.tv_initial_status_text) TextView initialStatusText;
+    @BindView(R.id.fragment_search_root) RelativeLayout fragmentRoot;
 
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Log.i(TAG, "onCreateView: CALLED, IS SAVED INSTANCE NULL? " + String.valueOf(savedInstanceState == null));
         View view = inflater.inflate(R.layout.fragment_status_search, container, false);
         ButterKnife.bind(this, view);
-        Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+        settings = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
-        twitter = TwitterUtils.getTwitter(getContext());
+        twitter = TwitterUtils.getTwitter(requireContext());
         // Re-load the array list from the saved state. This happens when
         // the device is rotated or in the event that the user leaves the
         // app then re-opens it.
@@ -114,18 +121,15 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
                 // or if we haven't reached the last page of statuses
                 if (!isLoading) {
                     if (!isLastPage) {
-                        Log.i(TAG, "onScrolledToEnd: LOADING MORE ITEMS");
                         pageNumber++;
                         new GetTimelineTask().execute(username);
-                    } else {
-                        Log.i(TAG, "onScrolledToEnd: LAST PAGE REACHED");
                     }
                 }
             }
         });
 
         userSearch.setOnClickListener(v -> {
-            if (vibrator != null) vibrator.vibrate(30);
+            vibrate();
             showUserSearchDialog();
         });
         fabScrollToBottom.setOnClickListener(v -> recyclerView.smoothScrollToPosition(statuses.size()));
@@ -142,20 +146,25 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
         });
 
         searchButton.setOnClickListener(v -> {
+            vibrate();
             if (TwitterUtils.isUserLoggedIn() && username != null) {
                 initialStatusText.setVisibility(View.GONE);
                 new GetTimelineTask().execute(username);
-                if (vibrator != null) vibrator.vibrate(30);
+            } else {
+                Snackbar.make(fragmentRoot, "Please login to your Twitter account", Snackbar.LENGTH_LONG)
+                        .setAction("LOGIN", _v -> startActivity(new Intent(getContext(), SettingsActivity.class)))
+                        .show();
             }
         });
 
         if (savedInstanceState != null) {
             username = savedInstanceState.getString(TAG_USERNAME);
+            // The username will be null if the device was
+            // rotated before a username was entered
             userSearch.setText(username == null
                     ? getString(R.string.default_user_search_text)
                     : username);
         }
-
         // Since onCreateView is called on rotation, we need to check if
         // any statuses have actually been loaded before we hide views.
         // This is so that views aren't hidden if there are no statuses
@@ -171,37 +180,37 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
         super.onStop();
         if (searchUserDialog != null) searchUserDialog.dismiss();
         if (bottomSheetDialog != null) bottomSheetDialog.dismiss();
-        Log.i(TAG, "onStop: GOODBYE");
     }
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        Log.i(TAG, "onSaveInstanceState: SAVING DATA");
         outState.putString(TAG_USERNAME, username);
 
         // The max (approximate) number of statuses that can be saved
         // before a TransactionTooLargeException is thrown
-        final int MAX_PARCEL_SIZE = 500;
+        final int MAX_PARCEL_SIZE = 375;
 
         // This is used to save the array list when the device rotates.
         // This way, all the statuses are shown again when onCreateView is called.
-        // If the number of statuses is greater than the limit, grab the 500 most
+        // If the number of statuses is greater than the limit, grab the 375 most
         // recent statuses and save that instead
-        if (statuses.size() <= MAX_PARCEL_SIZE) {
-            outState.putParcelableArrayList(TAG_LIST, statuses);
-        } else {
-            // Add the recent tweets to a temporary array list
-            ArrayList<ParcelableStatus> mostRecentStatuses = new ArrayList<>();
+        if (statuses != null) {
+            if (statuses.size() <= MAX_PARCEL_SIZE) {
+                outState.putParcelableArrayList(TAG_LIST, statuses);
+            } else {
+                // Add the recent tweets to a temporary array list
+                ArrayList<ParcelableStatus> mostRecentStatuses = new ArrayList<>();
 
-            int startingIndex = (statuses.size() - 1) - MAX_PARCEL_SIZE;
+                int startingIndex = (statuses.size() - 1) - MAX_PARCEL_SIZE;
 
-            // Get every status starting from position 499 (the 500th status)
-            // and onwards. This collects the last 500 statuses from the array list
-            for (int i = startingIndex; i < statuses.size(); i++) {
-                mostRecentStatuses.add(statuses.get(i));
+                // Get every status starting from position 499 (the 500th status)
+                // and onwards. This collects the last 500 statuses from the array list
+                for (int i = startingIndex; i < statuses.size(); i++) {
+                    mostRecentStatuses.add(statuses.get(i));
+                }
+                outState.putParcelableArrayList(TAG_LIST, mostRecentStatuses);
             }
-            outState.putParcelableArrayList(TAG_LIST, mostRecentStatuses);
         }
     }
 
@@ -247,7 +256,7 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
                 if (status.getUserDescription() == null) userDescription.setVisibility(View.GONE);
                 else userDescription.setText(status.getUserDescription());
 
-                bottomSheetDialog = new BottomSheetDialog(getContext());
+                bottomSheetDialog = new BottomSheetDialog(requireContext());
                 bottomSheetDialog.setContentView(dialogSheet);
                 bottomSheetDialog.show();
                 break;
@@ -255,9 +264,11 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
     }
 
     private void showUserSearchDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
 
-        View view = getLayoutInflater().inflate(R.layout.change_keyword_dialog, getView().findViewById(R.id.dialog_layout_root));
+        View view = getLayoutInflater().inflate(
+                R.layout.change_keyword_dialog,
+                getView().findViewById(R.id.dialog_layout_root));
         EditText etUsername = view.findViewById(R.id.et_query);
         TextInputLayout textInputLayout = view.findViewById(R.id.text_input_layout);
         textInputLayout.setHint("Username");
@@ -311,11 +322,15 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
         userSearch.setVisibility(View.GONE);
     }
 
-    /**
-     * AsyncTask to load the timeline of a given user
-     */
+    private void vibrate() {
+        Vibrator v = (Vibrator) requireContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (v != null) {
+            v.vibrate(30);
+        }
+    }
+
     @SuppressLint("StaticFieldLeak")
-    class GetTimelineTask extends AsyncTask<String, Void, ResponseList<Status>> {
+    private class GetTimelineTask extends AsyncTask<String, Void, ResponseList<Status>> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -352,27 +367,38 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
             // Need to make sure we remove the null status that we added earlier
             statuses.remove(statuses.size() - 1);
             adapter.notifyItemRemoved(statuses.size());
+            // The result will be null if the user doesn't exist
             if (result != null) {
                 Log.i(TAG, "onPostExecute: Statuses size: " + result.size());
                 if (result.size() > 0) {
                     for (twitter4j.Status status : result) {
-                        // Before we add a status to the adapter, we have to convert it
-                        // to a ParcelableStatus
+                        boolean canShowRetweets = settings.getBoolean(
+                                getString(R.string.pref_show_retweet_status_key),
+                                getResources().getBoolean(R.bool.pref_show_retweets_status));
+                        // Convert the status to a ParcelableStatus so that is can be
+                        // saved in onSaveInstanceState
                         ParcelableStatus parcelableStatus = new ParcelableStatus(
                                 status.getUser().getScreenName(),
                                 status.getUser().getDescription(),
                                 TwitterUtils.stripUrlFromMessage(status.getText()),
                                 DateFormat.format(getString(R.string.date_format), status.getCreatedAt()).toString(),
                                 status.getUser().getProfileImageURL(),
-                                status.getId()
-                        );
-                        adapter.addStatus(parcelableStatus);
+                                status.getId());
+                        // Before we add the status to the adapter, we need to check if
+                        // the user wants to show retweets, and if the status is a retweet
+                        if (canShowRetweets) {
+                            adapter.addStatus(parcelableStatus);
+                        } else {
+                            if (!status.isRetweet()) {
+                                adapter.addStatus(parcelableStatus);
+                            }
+                        }
                     }
                     // If the user exists but has no statuses, show the
                     // empty statuses message
                 } else {
                     // We have to check if this is the first load of the task
-                    // when there are no statuses so that this text view
+                    // when there are no statuses so that the empty status text view
                     // doesn't show when we're on any page greater than the first page
                     if (pageNumber == 1) {
                         emptyStatuses.setText(getString(R.string.empty_statuses));

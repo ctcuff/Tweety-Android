@@ -32,19 +32,23 @@
     <string name="history_keyword">Keyword: %s</string>
     <string name="history_num_occurrences">Occurrences: %d</string>
 
-    <string name="pref_show_retweets_key">show_retweets</string>
-    <string name="pref_show_retweets_label">Show Retweets</string>
-    <string name="pref_show_rt_true">Retweets will be included</string>
-    <string name="pref_show_rt_false">Retweets will be excluded</string>
+    <string name="pref_show_retweet_streaming_key">show_rt</string>
+    <string name="pref_show_retweet_streaming_label">Show Retweets</string>
+    <string name="pref_show_retweet_streaming_true">Retweets will be included when listening for occurrences</string>
+    <string name="pref_show_retweet_streaming_false">Retweets will be excluded when listening for occurrences</string>
 
     <string name="pref_english_only_key">english_only</string>
     <string name="pref_english_only_label">Restrict to English</string>
     <string name="pref_english_only_true">Only English statuses will be shown</string>
     <string name="pref_english_only_false">Statuses will be shown in any language</string>
 
+    <string name="pref_show_retweet_status_key">show_status_rt</string>
+    <string name="pref_show_retweet_status_label">Show Retweets</string>
+    <string name="pref_show_retweet_status_true">Retweets will be included when searching a user\'s profile</string>
+    <string name="pref_show_retweet_status_false">Retweets will be excluded when searching a user\'s profile</string>
+
     <string name="pref_logout_key">logout_key</string>
     <string name="pref_sign_in_key">sign_in</string>
-
 
     <string name="pref_auth">Auth</string>
     <string name="pref_token">token</string>
@@ -59,11 +63,15 @@
     <string name="occurrences">Occurrences</string>
     <string name="login_dialog_message">In order to use most features of this app, you\'ll need to log in to your Twitter account.</string>
     <string name="default_user_search_text">Tap here to enter a username</string>
+    <string name="default_keyword">Tap to change</string>
     <string name="button_search">Search</string>
 
     <string name="user_not_exists">User does not exit</string>
     <string name="empty_statuses">No statuses to show</string>
     <string name="initial_status_text">Statuses will appear here</string>
     <string name="date_format">EEE, MMMM d, yyyy hh:mm aaa</string>
+    <string name="not_logged_in_message">You are not logged in</string>
+
+    <string name="content_authority">com.camtech.android.tweetbot</string>
 
 </resources>

@@ -1,4 +1,4 @@
-package com.camtech.android.tweetbot.data;
+package com.camtech.android.tweetbot.models;
 
 import android.os.Bundle;
 import android.os.Parcel;

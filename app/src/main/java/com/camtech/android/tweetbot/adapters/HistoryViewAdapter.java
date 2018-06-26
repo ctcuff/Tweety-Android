@@ -2,6 +2,7 @@ package com.camtech.android.tweetbot.adapters;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -13,10 +14,9 @@ import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
-import com.camtech.android.tweetbot.utils.TwitterUtils;
+import com.camtech.android.tweetbot.utils.DbUtils;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -27,31 +27,14 @@ import butterknife.ButterKnife;
  */
 public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.ViewHolder> {
 
-    private String[] keyWord;
-    private int[] value;
-    private ClickListener clickListener;
-    private HashMap<String, Integer> hashMap;
+    private List<Pair<String, Integer>> pairs;
     private Context context;
+    private OnDeleteListener deleteListener;
 
-    public HistoryViewAdapter(Context context, HashMap<String, Integer> hashMap, ClickListener clickListener) {
+    public HistoryViewAdapter(Context context, OnDeleteListener onDeleteListener, List<Pair<String, Integer>> pairs) {
         this.context = context;
-        this.hashMap = hashMap;
-        this.clickListener = clickListener;
-
-        // Loop through the HashMap and extract the keyWord
-        // and number of occurrences to a String & int array,
-        // this way, it becomes easier to remove a single word
-        // without messing up the entire map
-        if (hashMap != null) {
-            keyWord = new String[hashMap.entrySet().size()];
-            value = new int[hashMap.keySet().size()];
-            int index = 0;
-            for (Map.Entry<String, Integer> map : hashMap.entrySet()) {
-                keyWord[index] = map.getKey();
-                value[index] = map.getValue();
-                index++;
-            }
-        }
+        this.deleteListener = onDeleteListener;
+        this.pairs = pairs;
     }
 
     @NonNull
@@ -64,42 +47,33 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.tvKeyword.setText(context.getString(R.string.history_keyword, keyWord[position]));
-        holder.tvValue.setText(context.getString(R.string.history_num_occurrences, value[position]));
+        Pair<String, Integer> pair = pairs.get(position);
+        holder.tvKeyword.setText(context.getString(R.string.history_keyword, pair.first));
+        holder.tvValue.setText(context.getString(R.string.history_num_occurrences, pair.second));
     }
 
     @Override
     public int getItemCount() {
-        return hashMap.size();
+        return pairs.size();
     }
 
     private void removeCard(int position) {
-        //Remove the selected card making sure to re-save the HashMap
-        hashMap.remove(keyWord[position]);
-        TwitterUtils.saveHashMap(hashMap);
-
-        keyWord = new String[hashMap.entrySet().size()];
-        value = new int[hashMap.keySet().size()];
-        int index = 0;
-        for (Map.Entry<String, Integer> map : hashMap.entrySet()) {
-            keyWord[index] = map.getKey();
-            value[index] = map.getValue();
-            index++;
-        }
+        deleteListener.onPairDeleted(pairs.get(position), (pairs.size() - 1) == 0);
+        DbUtils.deleteKeyWord(context, pairs.get(position).first);
+        pairs.remove(position);
         notifyItemRemoved(position);
-        notifyItemRangeChanged(position, hashMap.size() - 1);
     }
 
-    public void resetAdapter(HashMap<String, Integer> hashMap) {
-        this.hashMap = hashMap;
+    public void resetAdapter(List<Pair<String, Integer>> pairs) {
+        this.pairs = pairs;
         notifyDataSetChanged();
     }
 
-    public interface ClickListener {
-        void onItemClicked(int position);
+    public interface OnDeleteListener {
+        void onPairDeleted(Pair<String, Integer> pair, boolean isListEmpty);
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    class ViewHolder extends RecyclerView.ViewHolder {
 
         @BindView(R.id.tv_keyword) TextView tvKeyword;
         @BindView(R.id.tv_num_occurrences) TextView tvValue;
@@ -109,7 +83,6 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
         ViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
-            cardView.setOnClickListener(this);
             icDelete.setOnClickListener(v -> {
                 AlertDialog.Builder builder = new AlertDialog.Builder(itemView.getContext());
                 builder.setTitle("Delete Keyword");
@@ -117,11 +90,6 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
                 builder.setPositiveButton("OK", ((dialog, which) -> removeCard(getAdapterPosition())));
                 builder.setNegativeButton("CANCEL", ((dialog, which) -> dialog.dismiss())).create().show();
             });
-        }
-
-        @Override
-        public void onClick(View v) {
-            clickListener.onItemClicked(getAdapterPosition());
         }
     }
 }

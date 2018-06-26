@@ -1,31 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="Status Filters"
-        android:key="status_filter"/>
+    <PreferenceCategory
+        android:key="status_filter"
+        android:title="Stream Filters" />
 
     <CheckBoxPreference
-        android:defaultValue="@bool/pref_show_retweets"
-        android:key="@string/pref_show_retweets_key"
-        android:summaryOff="@string/pref_show_rt_false"
-        android:summaryOn="@string/pref_show_rt_true"
-        android:title="@string/pref_show_retweets_label" />
+        android:defaultValue="@bool/pref_show_retweets_streaming"
+        android:key="@string/pref_show_retweet_streaming_key"
+        android:summaryOff="@string/pref_show_retweet_streaming_false"
+        android:summaryOn="@string/pref_show_retweet_streaming_true"
+        android:title="@string/pref_show_retweet_streaming_label" />
 
     <CheckBoxPreference
-        android:defaultValue="@bool/pref_english_only"
+        android:defaultValue="@bool/pref_english_only_streaming"
         android:key="@string/pref_english_only_key"
         android:summaryOff="@string/pref_english_only_false"
         android:summaryOn="@string/pref_english_only_true"
         android:title="@string/pref_english_only_label" />
 
-    <PreferenceCategory android:title="Twitter"/>
+    <PreferenceCategory android:title="Status filters" />
+
+    <CheckBoxPreference
+        android:defaultValue="@bool/pref_show_retweets_status"
+        android:key="@string/pref_show_retweet_status_key"
+        android:summaryOff="@string/pref_show_retweet_status_false"
+        android:summaryOn="@string/pref_show_retweet_status_true"
+        android:title="@string/pref_show_retweet_status_label"/>
+
+    <PreferenceCategory android:title="Twitter" />
 
     <Preference
-        android:title="Sign In"
-        android:key="@string/pref_sign_in_key"/>
+        android:key="@string/pref_sign_in_key"
+        android:title="Sign In" />
 
     <Preference
-        android:title="Log out"
-        android:key="@string/pref_logout_key"/>
+        android:key="@string/pref_logout_key"
+        android:title="Log out" />
 
 </PreferenceScreen>
