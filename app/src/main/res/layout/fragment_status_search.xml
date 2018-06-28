@@ -20,12 +20,14 @@
         android:textSize="20sp" />
 
     <TextView
+        android:layout_margin="16dp"
         android:id="@+id/tv_empty_statuses"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="@string/empty_statuses"
+        android:text="@string/error_default"
         android:textColor="#fff"
+        android:gravity="center"
         android:textSize="20sp"
         android:visibility="gone"
         tools:visibility="visible" />

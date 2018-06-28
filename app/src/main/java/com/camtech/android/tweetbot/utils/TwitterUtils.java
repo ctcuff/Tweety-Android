@@ -12,13 +12,9 @@ import com.camtech.android.tweetbot.models.Keys;
 import com.google.firebase.auth.FirebaseAuth;
 import com.twitter.sdk.android.core.TwitterCore;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
-import twitter4j.conf.Configuration;
+import twitter4j.auth.AccessToken;
 import twitter4j.conf.ConfigurationBuilder;
 
 /**
@@ -38,30 +34,6 @@ public class TwitterUtils {
      * Will open a specific tweet in the Twitter app
      */
     private static final String BASE_TWITTER_STATUS_URI = "twitter://status?status_id=";
-
-    /**
-     * Helper method to build the configuration
-     */
-    public static Configuration getConfig(Context context) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences(
-                context.getString(R.string.pref_auth),
-                Context.MODE_PRIVATE);
-        String token = sharedPreferences.getString(context.getString(R.string.pref_token), null);
-        String tokenSecret = sharedPreferences.getString(context.getString(R.string.pref_token_secret), null);
-
-        if (token == null || tokenSecret == null) {
-            Log.i(TAG, "getConfig: Tokens were null");
-            return null;
-        }
-
-        ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.setDebugEnabled(true)
-                .setOAuthConsumerKey(Keys.CONSUMER_KEY)
-                .setOAuthConsumerSecret(Keys.CONSUMER_KEY_SECRET)
-                .setOAuthAccessToken(token)
-                .setOAuthAccessTokenSecret(tokenSecret);
-        return cb.build();
-    }
 
     /**
      * Uses the token and token secret stored in shared preferences
@@ -89,6 +61,19 @@ public class TwitterUtils {
                 .setOAuthAccessToken(token)
                 .setOAuthAccessTokenSecret(tokenSecret);
         return new TwitterFactory(cb.build()).getInstance();
+    }
+
+    public static AccessToken getAccessToken(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(
+                context.getString(R.string.pref_auth),
+                Context.MODE_PRIVATE);
+        String token = sharedPreferences.getString(context.getString(R.string.pref_token), null);
+        String tokenSecret = sharedPreferences.getString(context.getString(R.string.pref_token_secret), null);
+        if (token == null || tokenSecret == null) {
+            Log.i(TAG, "getAccessToken: Tokens were null");
+            return null;
+        }
+        return new AccessToken(token, tokenSecret);
     }
 
     /**
@@ -119,26 +104,6 @@ public class TwitterUtils {
             Log.i(TAG, "User is already logged out!");
             Toast.makeText(context, "You're already logged out", Toast.LENGTH_LONG).show();
         }
-    }
-
-    /**
-     * Gets rid of any URLs from a string. (Sometimes Twitter tweets/statuses have links)
-     * that are cut off making them un-clickable so it's best to just remove them)
-     */
-    public static String stripUrlFromMessage(String message) {
-        try {
-            String urlPattern = "((https?|ftp|gopher|telnet|file|Unsure|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?+-=\\\\.&])";
-            Pattern pattern = Pattern.compile(urlPattern, Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(message);
-            int i = 0;
-            while (matcher.find()) {
-                message = message.replaceAll(matcher.group(i), "").trim();
-                i++;
-            }
-        } catch (PatternSyntaxException e) {
-            e.printStackTrace();
-        }
-        return message;
     }
 
     /**

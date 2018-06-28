@@ -1,4 +1,4 @@
-package com.camtech.android.tweetbot.tweet;
+package com.camtech.android.tweetbot.services;
 
 import android.annotation.SuppressLint;
 import android.app.NotificationManager;
@@ -22,10 +22,10 @@ import android.util.Log;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.MainActivity;
+import com.camtech.android.tweetbot.models.Keys;
+import com.camtech.android.tweetbot.core.StreamListener;
 import com.camtech.android.tweetbot.utils.DbUtils;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
-
-import java.util.List;
 
 import twitter4j.ConnectionLifeCycleListener;
 import twitter4j.FilterQuery;
@@ -37,10 +37,9 @@ import twitter4j.TwitterStreamFactory;
  * alive while the service is running.
  */
 public class TwitterService extends Service {
-
-    private TwitterStream twitterStream;
+    private static final String TAG = TwitterService.class.getSimpleName();
+    private  TwitterStream twitterStream;
     private final String INTENT_STOP_SERVICE = "stopService";
-    private final int ID_CONNECTION_LOST = 1;
     private String keyWord;
     private NotificationManager notificationManager;
     private NotificationCompat.Builder builder;
@@ -48,7 +47,7 @@ public class TwitterService extends Service {
     private int occurrences;
 
     public static final String BROADCAST_UPDATE = "updateServiceStatus";
-    public static final int ID_BOT_CONNECTED = 0;
+    public static final int ID_STREAM_CONNECTED = 0;
 
     @Nullable
     @Override
@@ -59,6 +58,7 @@ public class TwitterService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.i(TAG, "onCreate: ");
         // Receiver to listen for network changes
         connectivityReceiver = new ConnectivityReceiver();
         registerReceiver(connectivityReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
@@ -71,15 +71,19 @@ public class TwitterService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         // This broadcast is sent to update the button text on the OccurrencesFragment
         sendBroadcast(new Intent(BROADCAST_UPDATE));
-
         keyWord = intent.getStringExtra(Intent.EXTRA_TEXT);
-        twitterStream = new TwitterStreamFactory(TwitterUtils.getConfig(this)).getInstance();
+
+        TwitterStreamFactory twitterStreamFactory = new TwitterStreamFactory();
+        twitterStream = twitterStreamFactory.getInstance();
+        twitterStream.setOAuthConsumer(Keys.CONSUMER_KEY, Keys.CONSUMER_KEY_SECRET);
+        twitterStream.setOAuthAccessToken(TwitterUtils.getAccessToken(this));
 
         // Used to listen for a specific word or phrase
         StreamListener streamListener = new StreamListener(this, keyWord);
         // Set a filter for the keyword to track its occurrences
         FilterQuery query = new FilterQuery(keyWord);
         query.track(keyWord);
+
         twitterStream.addListener(streamListener);
         twitterStream.filter(query);
 
@@ -94,12 +98,11 @@ public class TwitterService extends Service {
         builder = new NotificationCompat.Builder(this, "TwitterService");
         builder.setStyle(new NotificationCompat.BigTextStyle());
         builder.setShowWhen(false);
-        builder.setAutoCancel(true);
+        builder.setAutoCancel(false);
         builder.setSmallIcon(R.drawable.ic_stat_message);
         builder.setContentTitle(getString(R.string.notification_title));
         builder.addAction(R.drawable.ic_stat_message, "OPEN", openActivity);
         builder.setVibrate(new long[]{}); // If we don't include this, the notification won't drop down
-        builder.setOngoing(true); //Notification can't be swiped away
         builder.setColor(getResources().getColor(R.color.colorOccurrences));
         builder.setUsesChronometer(true);
         builder.setContentText(getString(R.string.notification_stream_occurrences, keyWord));
@@ -110,14 +113,14 @@ public class TwitterService extends Service {
         // Intent to stop the service when the notification is clicked
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 this,
-                ID_BOT_CONNECTED,
+                ID_STREAM_CONNECTED,
                 new Intent(INTENT_STOP_SERVICE),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         builder.setContentIntent(pendingIntent);
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(ID_BOT_CONNECTED, builder.build());
+        notificationManager.notify(ID_STREAM_CONNECTED, builder.build());
         twitterStream.addConnectionLifeCycleListener(new ConnectionLifeCycleListener() {
             @Override
             public void onConnect() {
@@ -127,7 +130,7 @@ public class TwitterService extends Service {
             @Override
             public void onDisconnect() {
                 // This makes sure the notification is cancelled if/when the stream is closed
-                notificationManager.cancel(ID_BOT_CONNECTED);
+                notificationManager.cancel(ID_STREAM_CONNECTED);
             }
 
             @Override
@@ -143,7 +146,7 @@ public class TwitterService extends Service {
     public void onDestroy() {
         super.onDestroy();
         cleanUpAndSave();
-        notificationManager.cancel(ID_BOT_CONNECTED);
+        notificationManager.cancel(ID_STREAM_CONNECTED);
         sendBroadcast(new Intent(BROADCAST_UPDATE));
         unregisterReceiver(stopServiceReceiver);
         unregisterReceiver(connectivityReceiver);
@@ -165,26 +168,18 @@ public class TwitterService extends Service {
         // Sometimes stopping the stream freezes the UI so we need
         // to stop it using an AsyncTask. We can also use this to
         // save data to the database
-       new AsyncTask<Void, Void, Void>() {
+        new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
                 twitterStream.cleanUp();
                 twitterStream.shutdown();
-                DbUtils.addKeyWord(getBaseContext(), keyWord, occurrences);
+                Pair<String, Integer> pair = DbUtils.getKeyWord(getBaseContext(), keyWord);
+                if (pair != null && pair.second != null && occurrences > pair.second) {
+                    DbUtils.addKeyWord(getBaseContext(), keyWord, occurrences);
+                }
                 return null;
             }
-
-           @Override
-           protected void onPostExecute(Void aVoid) {
-               super.onPostExecute(aVoid);
-               List<Pair<String, Integer>> pairs = DbUtils.getAllKeyWords(getBaseContext(), null);
-               if (pairs != null) {
-                   for (Pair<String, Integer> pair : pairs) {
-                       Log.i("TwitterService", "Keyword: " + pair.first + " Occurrences: " + pair.second);
-                   }
-               }
-           }
-       }.execute();
+        }.execute();
     }
 
     private BroadcastReceiver numOccurrencesReceiver = new BroadcastReceiver() {
@@ -210,7 +205,7 @@ public class TwitterService extends Service {
      * only lives within the lifecycle of the service.
      */
     public class ConnectivityReceiver extends BroadcastReceiver {
-
+        private final int ID_CONNECTION_LOST = 1;
         @Override
         public void onReceive(Context context, Intent intent) {
             // Mobile connection has dropped so we need to stop the service

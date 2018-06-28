@@ -66,12 +66,14 @@
     <string name="default_keyword">Tap to change</string>
     <string name="button_search">Search</string>
 
-    <string name="user_not_exists">User does not exit</string>
+    <string name="error_user_not_exists">Sorry, that page does not exist</string>
+    <string name="error_private_account">Only confirmed followers have access to \@%s\'s Tweets</string>
     <string name="empty_statuses">No statuses to show</string>
     <string name="initial_status_text">Statuses will appear here</string>
     <string name="date_format">EEE, MMMM d, yyyy hh:mm aaa</string>
     <string name="not_logged_in_message">You are not logged in</string>
 
     <string name="content_authority">com.camtech.android.tweetbot</string>
+    <string name="error_default">Error retrieving timeline</string>
 
 </resources>

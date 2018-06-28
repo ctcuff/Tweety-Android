@@ -31,7 +31,8 @@
             android:name="com.twitter.sdk.android.core.identity.OAuthActivity"
             android:configChanges="orientation|screenSize" />
 
-        <service android:name=".tweet.TwitterService" />
+        <service android:name=".services.TwitterService" />
+        <service android:name=".services.TimerService" />
 
         <provider
             android:name=".data.HistoryContentProvider"

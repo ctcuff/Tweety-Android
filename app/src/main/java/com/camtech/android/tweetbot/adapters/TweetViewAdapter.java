@@ -13,7 +13,6 @@ import android.widget.TextView;
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
 import com.camtech.android.tweetbot.models.Tweet;
-import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import java.util.List;
 
@@ -47,7 +46,7 @@ public class TweetViewAdapter extends RecyclerView.Adapter<TweetViewAdapter.View
         Tweet tweet = tweets.get(position);
         holder.statusDate.setText(tweet.getDate());
         holder.statusUsername.setText(context.getString(R.string.status_user, tweet.getScreenName()));
-        holder.statusMessage.setText(TwitterUtils.stripUrlFromMessage(tweet.getMessage()));
+        holder.statusMessage.setText(tweet.getMessage());
     }
 
     @Override

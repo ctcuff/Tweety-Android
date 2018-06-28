@@ -18,6 +18,8 @@ import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.SettingsActivity;
+import com.camtech.android.tweetbot.services.TwitterService;
+import com.camtech.android.tweetbot.utils.ServiceUtils;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
@@ -80,6 +82,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     @Override
     public boolean onPreferenceClick(Preference preference) {
         if (preference.getKey().equals(getString(R.string.pref_logout_key))) {
+            if (TwitterUtils.isUserLoggedIn()) {
+                if (ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
+                    requireContext().stopService(new Intent(requireContext(), TwitterService.class));
+                }
+            }
             TwitterUtils.logout(getContext());
             if (settingsActivity.getSupportActionBar() != null) {
                 settingsActivity.getSupportActionBar().setSubtitle(getString(R.string.not_logged_in_message));

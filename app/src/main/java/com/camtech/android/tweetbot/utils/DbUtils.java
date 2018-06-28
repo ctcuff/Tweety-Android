@@ -29,7 +29,7 @@ public class DbUtils {
      * Returns a single {@link Pair} containing the key word along with
      * its number of occurrences
      * */
-    public static Pair<String, Integer> getPair(Context context, String keyWord) {
+    public static Pair<String, Integer> getKeyWord(Context context, String keyWord) {
         if (isDbEmpty(context)) return null;
         Cursor cursor = null;
         try {
@@ -41,8 +41,8 @@ public class DbUtils {
             // Loop through the db to see if the word we're searching
             // for exists in the database
             if (cursor != null && cursor.moveToFirst()) {
-                String keyWordInDb = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_KEYWORD));
-                int numOccurrences = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_OCCURRENCES));
+                String keyWordInDb = cursor.getString(cursor.getColumnIndex(COLUMN_KEYWORD));
+                int numOccurrences = cursor.getInt(cursor.getColumnIndex(COLUMN_OCCURRENCES));
                 return Pair.create(keyWordInDb, numOccurrences);
             }
         } catch (Exception e) {

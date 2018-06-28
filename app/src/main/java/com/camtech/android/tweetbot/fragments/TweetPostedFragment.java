@@ -22,7 +22,7 @@ import android.widget.TextView;
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.adapters.TweetViewAdapter;
 import com.camtech.android.tweetbot.models.Tweet;
-import com.camtech.android.tweetbot.tweet.StreamListener;
+import com.camtech.android.tweetbot.core.StreamListener;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.squareup.picasso.Picasso;
 
@@ -89,30 +89,7 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(viewAdapter);
         // Used to listen for when the RecyclerView reaches the bottom
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                // If the recycler view can't scroll down vertically, then it must be at the bottom.
-                isRecyclerViewAtBottom = !recyclerView.canScrollVertically(1);
-            }
-
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                // Hide/show different floating action buttons depending
-                // on which direction we're scrolling
-                if (dy > 0 && fabClear.getVisibility() != View.VISIBLE && fabScrollToBottom.getVisibility() != View.VISIBLE) {
-                    fabClear.show();
-                    fabScrollToBottom.show();
-                    fabScrollToTop.hide();
-                } else if (dy < 0 && fabClear.getVisibility() == View.VISIBLE && fabScrollToBottom.getVisibility() == View.VISIBLE) {
-                    fabScrollToTop.show();
-                    fabClear.hide();
-                    fabScrollToBottom.hide();
-                }
-            }
-        });
+        recyclerView.addOnScrollListener(scrollListener);
 
         if (tweets != null && tweets.size() == 0) emptyView.setVisibility(View.VISIBLE);
         else emptyView.setVisibility(View.GONE);
@@ -157,6 +134,11 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
         requireContext().unregisterReceiver(tweetPostedReceiver);
     }
 
@@ -243,6 +225,31 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
                 // have to keep scrolling to the bottom themselves
                 if (isRecyclerViewAtBottom) recyclerView.smoothScrollToPosition(tweets.size());
                 emptyView.setVisibility(View.GONE);
+            }
+        }
+    };
+
+    private RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener() {
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+            // If the recycler view can't scroll down vertically, then it must be at the bottom.
+            isRecyclerViewAtBottom = !recyclerView.canScrollVertically(1);
+        }
+
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            // Hide/show different floating action buttons depending
+            // on which direction we're scrolling
+            if (dy > 0 && fabClear.getVisibility() != View.VISIBLE && fabScrollToBottom.getVisibility() != View.VISIBLE) {
+                fabClear.show();
+                fabScrollToBottom.show();
+                fabScrollToTop.hide();
+            } else if (dy < 0 && fabClear.getVisibility() == View.VISIBLE && fabScrollToBottom.getVisibility() == View.VISIBLE) {
+                fabScrollToTop.show();
+                fabClear.hide();
+                fabScrollToBottom.hide();
             }
         }
     };

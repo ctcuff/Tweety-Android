@@ -5,7 +5,7 @@ import android.os.Parcelable;
 import android.view.View;
 
 import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
-import com.camtech.android.tweetbot.tweet.StreamListener;
+import com.camtech.android.tweetbot.core.StreamListener;
 
 import twitter4j.Status;
 

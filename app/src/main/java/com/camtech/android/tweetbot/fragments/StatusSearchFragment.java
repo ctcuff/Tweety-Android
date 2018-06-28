@@ -331,6 +331,9 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
 
     @SuppressLint("StaticFieldLeak")
     private class GetTimelineTask extends AsyncTask<String, Void, ResponseList<Status>> {
+        private TwitterException exception = null;
+        private String user;
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -351,12 +354,15 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
 
         @Override
         protected ResponseList<twitter4j.Status> doInBackground(String... strings) {
-            Log.i(TAG, "doInBackground: Searching for @" + strings[0]);
+            user = strings[0];
+            Log.i(TAG, "doInBackground: Searching for @" + user);
             Log.i(TAG, "doInBackground: current page: " + pageNumber);
             try {
                 return twitter.getUserTimeline(strings[0], new Paging(pageNumber, 100));
             } catch (TwitterException e) {
+                exception = e;
                 e.printStackTrace();
+                Log.i(TAG, "Error code: " + e.getErrorCode());
             }
             return null;
         }
@@ -380,7 +386,7 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
                         ParcelableStatus parcelableStatus = new ParcelableStatus(
                                 status.getUser().getScreenName(),
                                 status.getUser().getDescription(),
-                                TwitterUtils.stripUrlFromMessage(status.getText()),
+                                status.isRetweet() ? status.getRetweetedStatus().getText() : status.getText(),
                                 DateFormat.format(getString(R.string.date_format), status.getCreatedAt()).toString(),
                                 status.getUser().getProfileImageURL(),
                                 status.getId());
@@ -411,8 +417,18 @@ public class StatusSearchFragment extends Fragment implements StatusViewAdapter.
                 }
                 showFab();
             } else {
-                emptyStatuses.setText(getString(R.string.user_not_exists));
-                emptyStatuses.setVisibility(View.VISIBLE);
+                if (exception != null) {
+                    switch (exception.getErrorCode()) {
+                        case 34: // The user doesn't exist
+                            emptyStatuses.setText(getString(R.string.error_user_not_exists));
+                            emptyStatuses.setVisibility(View.VISIBLE);
+                            break;
+                        case -1: // The user is private, we can't access their tweets
+                            emptyStatuses.setText(getString(R.string.error_private_account, user));
+                            emptyStatuses.setVisibility(View.VISIBLE);
+                            break;
+                    }
+                }
             }
             isLoading = false;
         }

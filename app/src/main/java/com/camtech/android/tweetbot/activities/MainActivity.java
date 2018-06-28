@@ -1,5 +1,10 @@
 package com.camtech.android.tweetbot.activities;
 
+import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
@@ -9,8 +14,13 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.camtech.android.tweetbot.R;
+import com.camtech.android.tweetbot.core.StreamListener;
 import com.camtech.android.tweetbot.fragments.FragmentAdapter;
 import com.camtech.android.tweetbot.models.Keys;
+import com.camtech.android.tweetbot.services.TimerService;
+import com.camtech.android.tweetbot.services.TwitterService;
+import com.camtech.android.tweetbot.utils.DbUtils;
+import com.camtech.android.tweetbot.utils.ServiceUtils;
 import com.twitter.sdk.android.core.Twitter;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
 import com.twitter.sdk.android.core.TwitterConfig;
@@ -18,6 +28,8 @@ import com.twitter.sdk.android.core.TwitterConfig;
 import me.relex.circleindicator.CircleIndicator;
 
 public class MainActivity extends AppCompatActivity {
+    private int wordCountFromBroadcast;
+    private String keyWord;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -53,12 +65,12 @@ public class MainActivity extends AppCompatActivity {
             private float sumPositionAndPositionOffset;
 
             @Override
-            public void onPageScrolled(int currentPage, float positionOffset, int positionOffsetPixels) {
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 // Moving the view the full value of the offset moves it WAY too fast
                 // so we'll use half of the value
                 int halfOffsetPixels = positionOffsetPixels / 2;
                 float currentPositionY = indicator.getTranslationY();
-                if (currentPage + positionOffset > sumPositionAndPositionOffset) {
+                if (position + positionOffset > sumPositionAndPositionOffset) {
                     // A swipe from right to left, move the view down
                     if (halfOffsetPixels > currentPositionY) {
                         indicator.setTranslationY(halfOffsetPixels);
@@ -67,11 +79,11 @@ public class MainActivity extends AppCompatActivity {
                     // A swipe from left to right, move the view up.
                     // We also only want to move the view up when going from
                     // the second fragment, to the first fragment
-                    if (currentPage < 1) {
-                        indicator.setTranslationY((halfOffsetPixels * 2) - halfOffsetPixels);
+                    if (position < 1) {
+                        indicator.setTranslationY(positionOffsetPixels - halfOffsetPixels);
                     }
                 }
-                sumPositionAndPositionOffset = currentPage + positionOffset;
+                sumPositionAndPositionOffset = position + positionOffset;
             }
 
             @Override
@@ -99,4 +111,40 @@ public class MainActivity extends AppCompatActivity {
                 .setSystemUiVisibility(
                         View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        registerReceiver(occurrencesReceiver, new IntentFilter(StreamListener.OCCURRENCES_INTENT_FILTER));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Makes sure to cancel the notification in the event
+        // that the app is swiped away
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.cancel(TwitterService.ID_STREAM_CONNECTED);
+        }
+        // Makes sure to save the keyword and its number of occurrences
+        // if the service was running while the app was swiped away
+        if (ServiceUtils.isServiceRunning(this, TwitterService.class)) {
+            DbUtils.addKeyWord(this, keyWord, wordCountFromBroadcast);
+        }
+        Intent timerIntent = new Intent(this, TimerService.class);
+        stopService(timerIntent);
+        startService(timerIntent);
+
+        unregisterReceiver(occurrencesReceiver);
+    }
+
+    private BroadcastReceiver occurrencesReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Get the updated number of occurrences from the stream listener
+            wordCountFromBroadcast = intent.getIntExtra(StreamListener.NUM_OCCURRENCES_EXTRA, 0);
+            keyWord = intent.getStringExtra(StreamListener.KEYWORD_BROADCAST_EXTRA);
+        }
+    };
 }

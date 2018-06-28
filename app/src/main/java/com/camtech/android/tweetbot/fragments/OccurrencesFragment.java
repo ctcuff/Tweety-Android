@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
@@ -24,12 +23,14 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
 import com.camtech.android.tweetbot.activities.SettingsActivity;
-import com.camtech.android.tweetbot.tweet.StreamListener;
-import com.camtech.android.tweetbot.tweet.TwitterService;
+import com.camtech.android.tweetbot.core.StreamListener;
+import com.camtech.android.tweetbot.services.TimerService;
+import com.camtech.android.tweetbot.services.TwitterService;
 import com.camtech.android.tweetbot.utils.DbUtils;
 import com.camtech.android.tweetbot.utils.ServiceUtils;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
@@ -45,11 +46,14 @@ import twitter4j.Status;
  */
 public class OccurrencesFragment extends Fragment {
 
+    private final String TAG = OccurrencesFragment.class.getSimpleName();
     private final String KEYWORD_KEY = "keyword";
     private final String OCCURRENCE_KEY = "occurrence";
     private static int numOccurrences;
     private static String keyWord;
     private AlertDialog resetKeyWordDialog;
+    private static int wordCountFromBroadcast;
+    private static int timeRemaining;
 
     @BindView(R.id.bt_start_stop) Button startStop;
     @BindView(R.id.tv_keyword) TextView tvKeyword;
@@ -64,6 +68,9 @@ public class OccurrencesFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_occurrences, container, false);
         ButterKnife.bind(this, rootView);
+        // We use a timer in this fragment to make sure the user doens't
+        // make too many auth calls in a short amount of time
+        Intent timerIntent = new Intent(requireContext(), TimerService.class);
         if (savedInstanceState == null) {
             initViews();
         } else {
@@ -83,11 +90,25 @@ public class OccurrencesFragment extends Fragment {
                             .show();
                     return;
                 }
-                Intent intent = new Intent(getContext(), TwitterService.class);
-                intent.putExtra(Intent.EXTRA_TEXT, keyWord);
-                requireContext().startService(intent);
+                // Can't start the service if we're waiting for
+                // the timer to finish
+                if (!ServiceUtils.isServiceRunning(requireContext(), TimerService.class)) {
+                    Intent twitterIntent = new Intent(getContext(), TwitterService.class);
+                    // Tell the TwitterService what word we're listening for
+                    twitterIntent.putExtra(Intent.EXTRA_TEXT, keyWord);
+                    requireContext().startService(twitterIntent);
+                    requireContext().startService(timerIntent);
+                } else {
+                    Toast.makeText(
+                            getContext(),
+                            getResources().getQuantityString(
+                                    R.plurals.time_remaining, timeRemaining, timeRemaining),
+                            Toast.LENGTH_SHORT).show();
+                }
             } else {
                 requireContext().stopService(new Intent(getContext(), TwitterService.class));
+                requireContext().stopService(timerIntent);
+                requireContext().startService(timerIntent);
             }
         });
 
@@ -113,13 +134,14 @@ public class OccurrencesFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        requireContext().unregisterReceiver(occurrencesReceiver);
         requireContext().unregisterReceiver(updateButtonReceiver);
+        requireContext().unregisterReceiver(timeRemainingReceiver);
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        requireContext().registerReceiver(timeRemainingReceiver, new IntentFilter(TimerService.BROADCAST_TIME));
         // Receiver to update tvNumOccurrences
         requireContext().registerReceiver(occurrencesReceiver, new IntentFilter(StreamListener.OCCURRENCES_INTENT_FILTER));
         // Receiver to make sure the button text updates
@@ -128,8 +150,12 @@ public class OccurrencesFragment extends Fragment {
         // the notification, we need to check if the service is running when the app is
         // re-opened.
         NotificationManager manager = (NotificationManager) requireContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        if (!ServiceUtils.isServiceRunning(requireContext(), TwitterService.class) && manager != null) {
-            manager.cancel(TwitterService.ID_BOT_CONNECTED);
+        if (!ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
+            if (manager != null) {
+                manager.cancel(TwitterService.ID_STREAM_CONNECTED);
+            }
+        } else {
+            tvNumOccurrences.setText(String.valueOf(wordCountFromBroadcast));
         }
         // We have to check if the keyword we had before was deleted from
         // the database when we come back to this fragment
@@ -138,7 +164,6 @@ public class OccurrencesFragment extends Fragment {
             tvNumOccurrences.setText(String.valueOf(0));
         }
         updateButtonText();
-        checkOrientation();
     }
 
     @Override
@@ -157,15 +182,22 @@ public class OccurrencesFragment extends Fragment {
         if (resetKeyWordDialog != null) resetKeyWordDialog.dismiss();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        requireContext().unregisterReceiver(occurrencesReceiver);
+    }
+
     private void updateButtonText() {
-        if (ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
-            startStop.setText(R.string.button_stop);
-        } else {
-            startStop.setText(R.string.button_start);
-        }
+        startStop.setText(
+                ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)
+                        ? R.string.button_stop
+                        : R.string.button_start);
     }
 
     private void initViews() {
+        // Load the last keyword from the database into the views
+        // or show the default keyword if the database is empty
         Pair<String, Integer> pair = DbUtils.getMostRecentWord(getContext());
         if (pair != null) {
             keyWord = pair.first;
@@ -209,7 +241,7 @@ public class OccurrencesFragment extends Fragment {
                 // the keyword that's already set. If it is, just close this dialog. If it's not,
                 // we'll then check if the word already exists in the database
                 if (!keyWordFromTextView.equals(keyWord)) {
-                    Pair<String, Integer> pair = DbUtils.getPair(getContext(), keyWordFromTextView);
+                    Pair<String, Integer> pair = DbUtils.getKeyWord(getContext(), keyWordFromTextView);
                     // The word exists in the database so we'll grab the pair
                     // and set the views
                     if (pair != null) {
@@ -224,6 +256,7 @@ public class OccurrencesFragment extends Fragment {
                         numOccurrences = 0;
                         tvKeyword.setText(getString(R.string.tv_keyword, keyWordFromTextView));
                         tvNumOccurrences.setText(String.valueOf(numOccurrences));
+                        DbUtils.addKeyWord(requireContext(), keyWord, numOccurrences);
                     }
                     // Make sure to stop the service when the keyword has changed
                     if (ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
@@ -253,8 +286,8 @@ public class OccurrencesFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             // Get the updated number of occurrences from the stream listener
-            int wordCount = intent.getIntExtra(StreamListener.NUM_OCCURRENCES_EXTRA, 0);
-            tvNumOccurrences.setText(String.valueOf(wordCount));
+            wordCountFromBroadcast = intent.getIntExtra(StreamListener.NUM_OCCURRENCES_EXTRA, 0);
+            tvNumOccurrences.setText(String.valueOf(wordCountFromBroadcast));
         }
     };
 
@@ -265,14 +298,15 @@ public class OccurrencesFragment extends Fragment {
         }
     };
 
-    private void checkOrientation() {
-        // We need to change the width of the keyword text view so that it can
-        // show longer strings when rotated horizontally
-        ViewGroup.LayoutParams params = tvKeyword.getLayoutParams();
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-            params.width = getResources().getDimensionPixelSize(R.dimen.tv_keyword_portrait);
-        } else {
-            params.width = getResources().getDimensionPixelSize(R.dimen.tv_keyword_landscape);
+    /**
+     * Receiver to get the time since the last query
+     *
+     * @see TimerService
+     */
+    private BroadcastReceiver timeRemainingReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            timeRemaining = (int) intent.getLongExtra(TimerService.INTENT_TIME_LEFT, 0);
         }
-    }
+    };
 }
