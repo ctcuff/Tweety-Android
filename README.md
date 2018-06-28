@@ -1,4 +1,4 @@
-# TweetBot
+# Android-Tweety
 Tweet Bot is an app that has two purposes. It's first purpose is to listen for the number of occurrences of a given word and graph the data
 using a bar graph. Secondly, it can be used to reterieve the timeline (get every tweet) of a specific user.
 
