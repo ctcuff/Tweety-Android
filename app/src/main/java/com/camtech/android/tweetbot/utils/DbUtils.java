@@ -28,7 +28,7 @@ public class DbUtils {
     /**
      * Returns a single {@link Pair} containing the key word along with
      * its number of occurrences
-     * */
+     */
     public static Pair<String, Integer> getKeyWord(Context context, String keyWord) {
         if (isDbEmpty(context)) return null;
         Cursor cursor = null;
@@ -36,13 +36,14 @@ public class DbUtils {
             // We only care about grabbing the keyword
             // and the number of occurrences
             String[] projection = {COLUMN_KEYWORD, COLUMN_OCCURRENCES};
-            String[] selectionArgs = new String[]{"%" + keyWord + "%"};
-            cursor = context.getContentResolver().query(CONTENT_URI, projection, COLUMN_KEYWORD + " LIKE ?", selectionArgs, null);
+            String[] selectionArgs = new String[]{keyWord};
+            cursor = context.getContentResolver().query(CONTENT_URI, projection, COLUMN_KEYWORD + "=?", selectionArgs, null);
             // Loop through the db to see if the word we're searching
             // for exists in the database
             if (cursor != null && cursor.moveToFirst()) {
                 String keyWordInDb = cursor.getString(cursor.getColumnIndex(COLUMN_KEYWORD));
                 int numOccurrences = cursor.getInt(cursor.getColumnIndex(COLUMN_OCCURRENCES));
+
                 return Pair.create(keyWordInDb, numOccurrences);
             }
         } catch (Exception e) {
@@ -84,7 +85,7 @@ public class DbUtils {
      * sort order defaults to the SQL default sort order. If not null, one of
      * {@link #KEYWORD_ASC}, {@link #KEYWORD_DESC}, {@link #OCCURRENCES_ASC}, or {@link #OCCURRENCES_DESC}
      * should be used
-     * */
+     */
     public static List<Pair<String, Integer>> getAllKeyWords(Context context, String sortOrder) {
         if (isDbEmpty(context)) return null;
         Cursor cursor = null;
@@ -114,7 +115,7 @@ public class DbUtils {
 
     /**
      * Deletes a single keyword from the database if it exists
-     * */
+     */
     public static void deleteKeyWord(Context context, String keyWord) {
         try {
             String[] selectionArgs = new String[]{keyWord};
@@ -127,7 +128,7 @@ public class DbUtils {
 
     /**
      * Deletes every keyword from the database
-     * */
+     */
     public static void deleteAllKeyWords(Context context) {
         try {
             int rowsDeleted = context.getContentResolver().delete(CONTENT_URI, null, null);
@@ -139,7 +140,7 @@ public class DbUtils {
 
     /**
      * Adds a single keyword to the database
-     * */
+     */
     public static void addKeyWord(Context context, String keyword, int numOccurrences) {
         ContentValues values = new ContentValues();
         values.put(HistoryContract.HistoryEntry.COLUMN_KEYWORD, keyword);
@@ -180,7 +181,7 @@ public class DbUtils {
     /**
      * Checks if the database is empty. This is used in the beginning of most
      * methods to prevent long unnecessary searching.
-     * */
+     */
     private static boolean isDbEmpty(Context context) {
         Cursor cursor = null;
         try {

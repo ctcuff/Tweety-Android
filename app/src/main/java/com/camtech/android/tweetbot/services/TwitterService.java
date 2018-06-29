@@ -16,14 +16,13 @@ import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.util.Pair;
 import android.util.Log;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.MainActivity;
-import com.camtech.android.tweetbot.models.Keys;
 import com.camtech.android.tweetbot.core.StreamListener;
+import com.camtech.android.tweetbot.models.Keys;
 import com.camtech.android.tweetbot.utils.DbUtils;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 
@@ -37,7 +36,7 @@ import twitter4j.TwitterStreamFactory;
  * alive while the service is running.
  */
 public class TwitterService extends Service {
-    private static final String TAG = TwitterService.class.getSimpleName();
+    public static final String TAG = TwitterService.class.getSimpleName();
     private  TwitterStream twitterStream;
     private final String INTENT_STOP_SERVICE = "stopService";
     private String keyWord;
@@ -48,6 +47,7 @@ public class TwitterService extends Service {
 
     public static final String BROADCAST_UPDATE = "updateServiceStatus";
     public static final int ID_STREAM_CONNECTED = 0;
+    public static final int ID_OPEN_MAIN_ACTIVITY = 100;
 
     @Nullable
     @Override
@@ -89,16 +89,21 @@ public class TwitterService extends Service {
 
         // Intent to open the OccurrencesFragment when the "OPEN" button is clicked
         Intent openActivityIntent = new Intent(this, MainActivity.class);
-        TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(this)
-                .addParentStack(MainActivity.class)
-                .addNextIntent(openActivityIntent);
-        PendingIntent openActivity = taskStackBuilder.getPendingIntent(100, PendingIntent.FLAG_UPDATE_CURRENT);
+        // Opens the MainActivity but only if the activity is in the background.
+        // Any further clicks won't do anything
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        PendingIntent openActivity = PendingIntent.getActivity(
+                this,
+                ID_OPEN_MAIN_ACTIVITY,
+                openActivityIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
 
         // Construct the notification to show all text when swiped down
         builder = new NotificationCompat.Builder(this, "TwitterService");
         builder.setStyle(new NotificationCompat.BigTextStyle());
         builder.setShowWhen(false);
         builder.setAutoCancel(false);
+        builder.setOngoing(true);
         builder.setSmallIcon(R.drawable.ic_stat_message);
         builder.setContentTitle(getString(R.string.notification_title));
         builder.addAction(R.drawable.ic_stat_message, "OPEN", openActivity);
@@ -190,12 +195,15 @@ public class TwitterService extends Service {
     };
 
     /**
-     * Triggers when the notification is clicked; used to stop the service
+     * Triggers when the notification itself  is clicked; used to stop the service
      */
     private BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             stopSelf();
+            Intent timerIntent = new Intent(getBaseContext(), TimerService.class);
+            stopService(timerIntent);
+            startService(timerIntent);
         }
     };
 

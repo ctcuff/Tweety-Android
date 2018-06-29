@@ -24,7 +24,7 @@ public class TimerService extends Service {
     public static final String BROADCAST_TIME = "Timer";
     public static final String INTENT_TIME_LEFT = "timeLeft";
     private CountDownTimer timer;
-    final long RUNTIME = /* 16 seconds */16_000L;
+    final long RUNTIME = /* 25 seconds */ 25_000L;
 
     @Nullable
     @Override

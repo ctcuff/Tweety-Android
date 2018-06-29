@@ -6,12 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.core.StreamListener;
@@ -30,6 +33,7 @@ import me.relex.circleindicator.CircleIndicator;
 public class MainActivity extends AppCompatActivity {
     private int wordCountFromBroadcast;
     private String keyWord;
+    private boolean doubleBackPressed = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -110,6 +114,20 @@ public class MainActivity extends AppCompatActivity {
         window.getDecorView()
                 .setSystemUiVisibility(
                         View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Used to exit the app but only if the back button
+        // was pressed twice in 2 seconds
+        if (doubleBackPressed) {
+            stopService(new Intent(this, TwitterService.class));
+            super.onBackPressed();
+            return;
+        }
+        doubleBackPressed = true;
+        Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+        new Handler().postDelayed(() -> doubleBackPressed = false, 2000);
     }
 
     @Override
