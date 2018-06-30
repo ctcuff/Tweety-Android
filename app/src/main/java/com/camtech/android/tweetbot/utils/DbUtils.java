@@ -141,41 +141,12 @@ public class DbUtils {
     /**
      * Adds a single keyword to the database
      */
-    public static void addKeyWord(Context context, String keyword, int numOccurrences) {
+    public static void saveKeyWord(Context context, String keyword, int numOccurrences) {
         ContentValues values = new ContentValues();
         values.put(HistoryContract.HistoryEntry.COLUMN_KEYWORD, keyword);
         values.put(HistoryContract.HistoryEntry.COLUMN_OCCURRENCES, numOccurrences);
         Uri uri = context.getContentResolver().insert(HistoryContract.HistoryEntry.CONTENT_URI, values);
         Log.i(TAG, "URI: " + (uri != null ? uri.toString() : ":("));
-    }
-
-    public static boolean doesWordExist(Context context, String keyWord) {
-        if (isDbEmpty(context)) return false;
-        Cursor cursor = null;
-        try {
-            cursor = context.getContentResolver().query(
-                    CONTENT_URI,
-                    new String[]{COLUMN_KEYWORD},
-                    null,
-                    null,
-                    null);
-            if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    while (!cursor.isAfterLast()) {
-                        String keyWordInDb = cursor.getString(cursor.getColumnIndex(COLUMN_KEYWORD));
-                        if (keyWordInDb.equals(keyWord)) {
-                            return true;
-                        }
-                        cursor.moveToNext();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (cursor != null) cursor.close();
-        }
-        return false;
     }
 
     /**

@@ -21,6 +21,7 @@
     <string name="notification_stream_message">Stream connected, listening for messages. Touch to stop</string>
     <string name="notification_stream_occurrences">Stream connected. Listening for occurrences of \"%s\". Touch to stop</string>
     <string name="notification_title">TwitterStream</string>
+    <string name="notification_title_error">TwitterStream Error</string>
 
     <string name="filler_text">
         Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.

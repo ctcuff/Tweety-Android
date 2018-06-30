@@ -46,19 +46,20 @@ import twitter4j.Status;
  */
 public class OccurrencesFragment extends Fragment {
 
-    private final String TAG = OccurrencesFragment.class.getSimpleName();
     private final String KEYWORD_KEY = "keyword";
     private final String OCCURRENCE_KEY = "occurrence";
     private static int numOccurrences;
     private static String keyWord;
     private AlertDialog resetKeyWordDialog;
-    private static int wordCountFromBroadcast;
     private static int timeRemaining;
+    private Intent timerIntent;
 
     @BindView(R.id.bt_start_stop) Button startStop;
     @BindView(R.id.tv_keyword) TextView tvKeyword;
     @BindView(R.id.tv_num_occurrences) TextView tvNumOccurrences;
     @BindView(R.id.fragment_occurrence_root) RelativeLayout root;
+    @BindView(R.id.iv_graph) ImageView graphImage;
+    @BindView(R.id.iv_settings) ImageView settingsImage;
     @BindString(R.string.pref_token) String prefToken;
     @BindString(R.string.pref_token_secret) String prefTokenSecret;
     @BindString(R.string.default_keyword) String defaultKeyword;
@@ -68,9 +69,10 @@ public class OccurrencesFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_occurrences, container, false);
         ButterKnife.bind(this, rootView);
-        // We use a timer in this fragment to make sure the user doens't
+        // We use a timer in this fragment to make sure the user doesn't
         // make too many auth calls in a short amount of time
-        Intent timerIntent = new Intent(requireContext(), TimerService.class);
+        timerIntent = new Intent(requireContext(), TimerService.class);
+
         if (savedInstanceState == null) {
             initViews();
         } else {
@@ -117,13 +119,11 @@ public class OccurrencesFragment extends Fragment {
             changeKeyword();
         });
 
-        ImageView graphImage = rootView.findViewById(R.id.iv_graph);
         graphImage.setOnClickListener(v -> {
             vibrate();
             startActivity(new Intent(getContext(), HistoryActivity.class));
         });
 
-        ImageView settingsImage = rootView.findViewById(R.id.iv_settings);
         settingsImage.setOnClickListener(v -> {
             vibrate();
             startActivity(new Intent(getContext(), SettingsActivity.class));
@@ -154,16 +154,13 @@ public class OccurrencesFragment extends Fragment {
             if (manager != null) {
                 manager.cancel(TwitterService.ID_STREAM_CONNECTED);
             }
-        } else {
-            tvNumOccurrences.setText(String.valueOf(wordCountFromBroadcast));
-        }
-        // We have to check if the keyword we had before was deleted from
-        // the database when we come back to this fragment
-        // (i.e. it was deleted in the HistoryActivity)
-        if (!DbUtils.doesWordExist(getContext(), keyWord)) {
-            tvNumOccurrences.setText(String.valueOf(0));
         }
         updateButtonText();
+        Pair<String, Integer> pair = DbUtils.getKeyWord(requireContext(), keyWord);
+        if (pair != null) {
+            tvKeyword.setText(getString(R.string.tv_keyword, pair.first));
+            tvNumOccurrences.setText(String.valueOf(pair.second));
+        }
     }
 
     @Override
@@ -256,11 +253,13 @@ public class OccurrencesFragment extends Fragment {
                         numOccurrences = 0;
                         tvKeyword.setText(getString(R.string.tv_keyword, keyWordFromTextView));
                         tvNumOccurrences.setText(String.valueOf(numOccurrences));
-                        DbUtils.addKeyWord(requireContext(), keyWord, numOccurrences);
+                        DbUtils.saveKeyWord(requireContext(), keyWord, numOccurrences);
                     }
                     // Make sure to stop the service when the keyword has changed
                     if (ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
                         requireContext().stopService(new Intent(getContext(), TwitterService.class));
+                        requireContext().stopService(timerIntent);
+                        requireContext().startService(timerIntent);
                     }
                     resetKeyWordDialog.dismiss();
                 }
@@ -286,8 +285,8 @@ public class OccurrencesFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             // Get the updated number of occurrences from the stream listener
-            wordCountFromBroadcast = intent.getIntExtra(StreamListener.NUM_OCCURRENCES_EXTRA, 0);
-            tvNumOccurrences.setText(String.valueOf(wordCountFromBroadcast));
+            int wordCount = intent.getIntExtra(StreamListener.NUM_OCCURRENCES_EXTRA, 0);
+            tvNumOccurrences.setText(String.valueOf(wordCount));
         }
     };
 

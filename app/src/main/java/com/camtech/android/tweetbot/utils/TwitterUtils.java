@@ -14,7 +14,7 @@ import com.twitter.sdk.android.core.TwitterCore;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
-import twitter4j.auth.AccessToken;
+import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 
 /**
@@ -34,6 +34,27 @@ public class TwitterUtils {
      * Will open a specific tweet in the Twitter app
      */
     private static final String BASE_TWITTER_STATUS_URI = "twitter://status?status_id=";
+
+    public static Configuration getConfig(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(
+                context.getString(R.string.pref_auth),
+                Context.MODE_PRIVATE);
+        String token = sharedPreferences.getString(context.getString(R.string.pref_token), null);
+        String tokenSecret = sharedPreferences.getString(context.getString(R.string.pref_token_secret), null);
+
+        if (token == null || tokenSecret == null) {
+            Log.i(TAG, "getConfig: Tokens were null");
+            return null;
+        }
+
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.setDebugEnabled(true)
+                .setOAuthConsumerKey(Keys.CONSUMER_KEY)
+                .setOAuthConsumerSecret(Keys.CONSUMER_KEY_SECRET)
+                .setOAuthAccessToken(token)
+                .setOAuthAccessTokenSecret(tokenSecret);
+        return cb.build();
+    }
 
     /**
      * Uses the token and token secret stored in shared preferences
@@ -61,19 +82,6 @@ public class TwitterUtils {
                 .setOAuthAccessToken(token)
                 .setOAuthAccessTokenSecret(tokenSecret);
         return new TwitterFactory(cb.build()).getInstance();
-    }
-
-    public static AccessToken getAccessToken(Context context) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences(
-                context.getString(R.string.pref_auth),
-                Context.MODE_PRIVATE);
-        String token = sharedPreferences.getString(context.getString(R.string.pref_token), null);
-        String tokenSecret = sharedPreferences.getString(context.getString(R.string.pref_token_secret), null);
-        if (token == null || tokenSecret == null) {
-            Log.i(TAG, "getAccessToken: Tokens were null");
-            return null;
-        }
-        return new AccessToken(token, tokenSecret);
     }
 
     /**

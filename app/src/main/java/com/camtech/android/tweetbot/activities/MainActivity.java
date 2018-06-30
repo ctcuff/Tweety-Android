@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -18,7 +17,7 @@ import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.core.StreamListener;
-import com.camtech.android.tweetbot.fragments.FragmentAdapter;
+import com.camtech.android.tweetbot.adapters.FragmentAdapter;
 import com.camtech.android.tweetbot.models.Keys;
 import com.camtech.android.tweetbot.services.TimerService;
 import com.camtech.android.tweetbot.services.TwitterService;
@@ -148,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         // Makes sure to save the keyword and its number of occurrences
         // if the service was running while the app was swiped away
         if (ServiceUtils.isServiceRunning(this, TwitterService.class)) {
-            DbUtils.addKeyWord(this, keyWord, wordCountFromBroadcast);
+            DbUtils.saveKeyWord(this, keyWord, wordCountFromBroadcast);
         }
         Intent timerIntent = new Intent(this, TimerService.class);
         stopService(timerIntent);

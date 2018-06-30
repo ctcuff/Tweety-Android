@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.camtech.android.tweetbot.core.StreamListener;
 
@@ -43,7 +42,6 @@ public class TimerService extends Service {
             public void onTick(long millisUntilFinished) {
                 timeIntent.putExtra(INTENT_TIME_LEFT, millisUntilFinished / 1000);
                 sendBroadcast(timeIntent);
-                Log.i(TAG, "onTick: Time left: " + millisUntilFinished / 1000);
             }
 
             @Override

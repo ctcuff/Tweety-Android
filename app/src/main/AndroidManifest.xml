@@ -34,6 +34,7 @@
 
         <service android:name=".services.TwitterService" />
         <service android:name=".services.TimerService" />
+        <service android:name=".services.AutoSaveService" />
 
         <provider
             android:name=".data.HistoryContentProvider"

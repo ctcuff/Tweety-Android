@@ -13,6 +13,7 @@ import android.text.format.DateFormat;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.models.Tweet;
+import com.camtech.android.tweetbot.services.TimerService;
 import com.camtech.android.tweetbot.services.TwitterService;
 import com.camtech.android.tweetbot.utils.DbUtils;
 
@@ -121,16 +122,18 @@ public class StreamListener implements StatusListener {
 
     @Override
     public void onException(Exception error) {
+        Intent timerIntent = new Intent(context, TimerService.class);
+        context.stopService(timerIntent);
+        context.startService(timerIntent);
         context.stopService(new Intent(context, TwitterService.class));
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         AudioManager audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Exception");
-
         builder.setStyle(new NotificationCompat.BigTextStyle());
         builder.setSmallIcon(R.drawable.ic_stat_message);
-        builder.setContentTitle(context.getString(R.string.notification_title));
+        builder.setContentTitle(context.getString(R.string.notification_title_error));
         builder.setColor(context.getResources().getColor(R.color.colorNotificationError));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
@@ -141,9 +144,9 @@ public class StreamListener implements StatusListener {
             // Error 420 occurs when there are too many auth
             // requests in a short amount of time
             if (error.getMessage().contains("420")) {
-                builder.setContentText("Error " + error.getMessage() + "\nPlease wait 60 seconds before trying again");
+                builder.setContentText("Too many requests in a short amount of time. Please wait 60 seconds before trying again");
             } else {
-                builder.setContentText("Error " + error.getMessage());
+                builder.setContentText("An unexpected error occurred");
             }
             // Don't vibrate if the user's device is on silent
             if (audio != null) {
@@ -161,6 +164,7 @@ public class StreamListener implements StatusListener {
                 manager.notify(2, builder.build());
             }
         }
+        error.printStackTrace();
     }
 
     private void broadcastTweet() {

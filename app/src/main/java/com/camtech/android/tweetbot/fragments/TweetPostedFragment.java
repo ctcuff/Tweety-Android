@@ -81,8 +81,6 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
         viewAdapter.setOnItemClickedListener(this);
 
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
-        //This makes sure that the newest cards appear at the bottom
-        manager.setStackFromEnd(true);
         // The recycler view should stretch each item
         // to fit all the text of each card
         recyclerView.setHasFixedSize(false);

@@ -22,7 +22,6 @@ import android.util.Log;
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.MainActivity;
 import com.camtech.android.tweetbot.core.StreamListener;
-import com.camtech.android.tweetbot.models.Keys;
 import com.camtech.android.tweetbot.utils.DbUtils;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 
@@ -73,17 +72,16 @@ public class TwitterService extends Service {
         sendBroadcast(new Intent(BROADCAST_UPDATE));
         keyWord = intent.getStringExtra(Intent.EXTRA_TEXT);
 
-        TwitterStreamFactory twitterStreamFactory = new TwitterStreamFactory();
-        twitterStream = twitterStreamFactory.getInstance();
-        twitterStream.setOAuthConsumer(Keys.CONSUMER_KEY, Keys.CONSUMER_KEY_SECRET);
-        twitterStream.setOAuthAccessToken(TwitterUtils.getAccessToken(this));
+        Intent autoSaveIntent = new Intent(this, AutoSaveService.class);
+        autoSaveIntent.putExtra(TAG, keyWord);
+        startService(autoSaveIntent);
 
         // Used to listen for a specific word or phrase
         StreamListener streamListener = new StreamListener(this, keyWord);
         // Set a filter for the keyword to track its occurrences
         FilterQuery query = new FilterQuery(keyWord);
         query.track(keyWord);
-
+        twitterStream = new TwitterStreamFactory(TwitterUtils.getConfig(this)).getInstance();
         twitterStream.addListener(streamListener);
         twitterStream.filter(query);
 
@@ -156,6 +154,7 @@ public class TwitterService extends Service {
         unregisterReceiver(stopServiceReceiver);
         unregisterReceiver(connectivityReceiver);
         unregisterReceiver(numOccurrencesReceiver);
+        stopService(new Intent(this, AutoSaveService.class));
     }
 
     public boolean hasConnection() {
@@ -180,7 +179,7 @@ public class TwitterService extends Service {
                 twitterStream.shutdown();
                 Pair<String, Integer> pair = DbUtils.getKeyWord(getBaseContext(), keyWord);
                 if (pair != null && pair.second != null && occurrences > pair.second) {
-                    DbUtils.addKeyWord(getBaseContext(), keyWord, occurrences);
+                    DbUtils.saveKeyWord(getBaseContext(), keyWord, occurrences);
                 }
                 return null;
             }
