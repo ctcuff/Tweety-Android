@@ -34,9 +34,9 @@
     <string name="history_num_occurrences">Occurrences: %d</string>
 
     <string name="pref_show_retweet_streaming_key">show_rt</string>
-    <string name="pref_show_retweet_streaming_label">Show Retweets</string>
-    <string name="pref_show_retweet_streaming_true">Retweets will be included when listening for occurrences</string>
-    <string name="pref_show_retweet_streaming_false">Retweets will be excluded when listening for occurrences</string>
+    <string name="pref_show_retweet_streaming_label">Show retweets</string>
+    <string name="pref_show_retweet_streaming_true">Retweets will be included</string>
+    <string name="pref_show_retweet_streaming_false">Retweets will be excluded</string>
 
     <string name="pref_english_only_key">english_only</string>
     <string name="pref_english_only_label">Restrict to English</string>
@@ -44,7 +44,7 @@
     <string name="pref_english_only_false">Statuses will be shown in any language</string>
 
     <string name="pref_show_retweet_status_key">show_status_rt</string>
-    <string name="pref_show_retweet_status_label">Show Retweets</string>
+    <string name="pref_show_retweet_status_label">Show retweets</string>
     <string name="pref_show_retweet_status_true">Retweets will be included when searching a user\'s profile</string>
     <string name="pref_show_retweet_status_false">Retweets will be excluded when searching a user\'s profile</string>
 

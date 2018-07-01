@@ -3,7 +3,6 @@ package com.camtech.android.tweetbot.adapters;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.util.Pair;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -14,7 +13,6 @@ import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.HistoryActivity;
-import com.camtech.android.tweetbot.utils.DbUtils;
 
 import java.util.List;
 
@@ -29,11 +27,11 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
 
     private List<Pair<String, Integer>> pairs;
     private Context context;
-    private OnDeleteListener deleteListener;
+    private OnItemClickListener clickListener;
 
-    public HistoryViewAdapter(Context context, OnDeleteListener onDeleteListener, List<Pair<String, Integer>> pairs) {
+    public HistoryViewAdapter(Context context, OnItemClickListener clickListener, List<Pair<String, Integer>> pairs) {
         this.context = context;
-        this.deleteListener = onDeleteListener;
+        this.clickListener = clickListener;
         this.pairs = pairs;
     }
 
@@ -57,9 +55,7 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
         return pairs.size();
     }
 
-    private void removeCard(int position) {
-        deleteListener.onPairDeleted(pairs.get(position), (pairs.size() - 1) == 0);
-        DbUtils.deleteKeyWord(context, pairs.get(position).first);
+    public void removeCard(int position) {
         pairs.remove(position);
         notifyItemRemoved(position);
     }
@@ -69,11 +65,11 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
         notifyDataSetChanged();
     }
 
-    public interface OnDeleteListener {
-        void onPairDeleted(Pair<String, Integer> pair, boolean isListEmpty);
+    public interface OnItemClickListener {
+        void onClick(Pair<String, Integer> pair, int position);
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         @BindView(R.id.tv_keyword) TextView tvKeyword;
         @BindView(R.id.tv_num_occurrences) TextView tvValue;
@@ -83,13 +79,12 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
         ViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
-            icDelete.setOnClickListener(v -> {
-                AlertDialog.Builder builder = new AlertDialog.Builder(itemView.getContext());
-                builder.setTitle("Delete Keyword");
-                builder.setMessage("Are you sure you want to delete this word ?");
-                builder.setPositiveButton("OK", ((dialog, which) -> removeCard(getAdapterPosition())));
-                builder.setNegativeButton("CANCEL", ((dialog, which) -> dialog.dismiss())).create().show();
-            });
+            icDelete.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+           clickListener.onClick(pairs.get(getAdapterPosition()), getAdapterPosition());
         }
     }
 }

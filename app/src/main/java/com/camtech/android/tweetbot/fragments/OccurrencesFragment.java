@@ -45,11 +45,10 @@ import twitter4j.Status;
  * See {@link StreamListener#onStatus(Status)}
  */
 public class OccurrencesFragment extends Fragment {
-
     private final String KEYWORD_KEY = "keyword";
     private final String OCCURRENCE_KEY = "occurrence";
-    private static int numOccurrences;
-    private static String keyWord;
+    private  int numOccurrences;
+    private  String keyWord;
     private AlertDialog resetKeyWordDialog;
     private static int timeRemaining;
     private Intent timerIntent;
@@ -136,6 +135,7 @@ public class OccurrencesFragment extends Fragment {
         super.onPause();
         requireContext().unregisterReceiver(updateButtonReceiver);
         requireContext().unregisterReceiver(timeRemainingReceiver);
+
     }
 
     @Override
@@ -155,12 +155,21 @@ public class OccurrencesFragment extends Fragment {
                 manager.cancel(TwitterService.ID_STREAM_CONNECTED);
             }
         }
-        updateButtonText();
         Pair<String, Integer> pair = DbUtils.getKeyWord(requireContext(), keyWord);
-        if (pair != null) {
-            tvKeyword.setText(getString(R.string.tv_keyword, pair.first));
-            tvNumOccurrences.setText(String.valueOf(pair.second));
+        // Odds are, onResume will probably be called while the service is running.
+        // If it is, we'll want to get the number of occurrences saved from
+        // onSavedInstanceState. If not, we'll get the last saved value from the database
+        if (!ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
+            if (pair != null) {
+                tvKeyword.setText(getString(R.string.tv_keyword, pair.first));
+                tvNumOccurrences.setText(String.valueOf(pair.second));
+            } else {
+                tvNumOccurrences.setText(String.valueOf(0));
+            }
+        } else {
+            tvNumOccurrences.setText(String.valueOf(numOccurrences));
         }
+        updateButtonText();
     }
 
     @Override

@@ -16,8 +16,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.util.Pair;
-import android.util.Log;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.MainActivity;
@@ -57,7 +55,6 @@ public class TwitterService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "onCreate: ");
         // Receiver to listen for network changes
         connectivityReceiver = new ConnectivityReceiver();
         registerReceiver(connectivityReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
@@ -76,11 +73,10 @@ public class TwitterService extends Service {
         autoSaveIntent.putExtra(TAG, keyWord);
         startService(autoSaveIntent);
 
-        // Used to listen for a specific word or phrase
-        StreamListener streamListener = new StreamListener(this, keyWord);
         // Set a filter for the keyword to track its occurrences
         FilterQuery query = new FilterQuery(keyWord);
-        query.track(keyWord);
+        // Used to listen for a specific word or phrase
+        StreamListener streamListener = new StreamListener(this, keyWord);
         twitterStream = new TwitterStreamFactory(TwitterUtils.getConfig(this)).getInstance();
         twitterStream.addListener(streamListener);
         twitterStream.filter(query);
@@ -177,10 +173,7 @@ public class TwitterService extends Service {
             protected Void doInBackground(Void... voids) {
                 twitterStream.cleanUp();
                 twitterStream.shutdown();
-                Pair<String, Integer> pair = DbUtils.getKeyWord(getBaseContext(), keyWord);
-                if (pair != null && pair.second != null && occurrences > pair.second) {
-                    DbUtils.saveKeyWord(getBaseContext(), keyWord, occurrences);
-                }
+                DbUtils.saveKeyWord(getBaseContext(), keyWord, occurrences);
                 return null;
             }
         }.execute();

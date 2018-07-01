@@ -10,7 +10,7 @@ import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
 
 public class FragmentAdapter extends FragmentPagerAdapter {
 
-    private final int NUM_FRAGMENTS = 3;
+    private final int NUM_FRAGMENTS = 2;
 
     public FragmentAdapter(FragmentManager fm) {
         super(fm);
@@ -23,8 +23,6 @@ public class FragmentAdapter extends FragmentPagerAdapter {
                 return new OccurrencesFragment();
             case 1:
                 return new TweetPostedFragment();
-            case 2:
-                return new StatusSearchFragment();
             default:
                 return null;
         }

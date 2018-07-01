@@ -10,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,10 +24,11 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class HistoryActivity extends AppCompatActivity implements HistoryViewAdapter.OnDeleteListener {
+public class HistoryActivity extends AppCompatActivity implements HistoryViewAdapter.OnItemClickListener {
 
     private List<Pair<String, Integer>> pairs;
     private HistoryViewAdapter viewAdapter;
+    private AlertDialog deleteWordDialog;
     private AlertDialog clearHistoryDialog;
 
     @BindView(R.id.tv_no_history) TextView tvNoHistory;
@@ -81,7 +81,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
                 }
                 break;
         }
-        return super.onOptionsItemSelected(item);
+        return true;
     }
 
     @Override
@@ -97,14 +97,24 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     protected void onStop() {
         super.onStop();
         if (clearHistoryDialog != null) clearHistoryDialog.dismiss();
+        if (deleteWordDialog != null) deleteWordDialog.dismiss();
     }
 
     @Override
-    public void onPairDeleted(Pair<String, Integer> pair, boolean isListEmpty) {
-        Log.i(this.toString(), "onPairDeleted: " + pair.toString());
-        if (isListEmpty) {
-            tvNoHistory.setVisibility(View.VISIBLE);
-        }
+    public void onClick(Pair<String, Integer> pair, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Keyword")
+                .setMessage("Are you sure you want to delete this word ?")
+                .setPositiveButton("OK", ((dialog, which) -> {
+                    DbUtils.deleteKeyWord(this, pair.first);
+                    viewAdapter.removeCard(position);
+                    if (viewAdapter.getItemCount() == 0) {
+                        tvNoHistory.setVisibility(View.VISIBLE);
+                    }
+                }))
+                .setNegativeButton("CANCEL", ((dialog, which) -> dialog.dismiss()));
+        deleteWordDialog = builder.create();
+        deleteWordDialog.show();
     }
 
     private void clearHistory() {

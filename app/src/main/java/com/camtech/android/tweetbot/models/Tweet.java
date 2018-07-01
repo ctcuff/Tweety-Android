@@ -109,7 +109,6 @@ public class Tweet implements Parcelable {
         return screenName;
     }
 
-
     public String getName() {
         return name;
     }

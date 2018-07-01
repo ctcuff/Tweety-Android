@@ -19,15 +19,6 @@
         android:summaryOn="@string/pref_english_only_true"
         android:title="@string/pref_english_only_label" />
 
-    <PreferenceCategory android:title="Status filters" />
-
-    <CheckBoxPreference
-        android:defaultValue="@bool/pref_show_retweets_status"
-        android:key="@string/pref_show_retweet_status_key"
-        android:summaryOff="@string/pref_show_retweet_status_false"
-        android:summaryOn="@string/pref_show_retweet_status_true"
-        android:title="@string/pref_show_retweet_status_label"/>
-
     <PreferenceCategory android:title="Twitter" />
 
     <Preference

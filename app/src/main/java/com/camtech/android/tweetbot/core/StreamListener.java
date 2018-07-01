@@ -103,24 +103,6 @@ public class StreamListener implements StatusListener {
     }
 
     @Override
-    public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
-
-    }
-
-    @Override
-    public void onTrackLimitationNotice(int i) {
-    }
-
-    @Override
-    public void onScrubGeo(long l, long l1) {
-
-    }
-
-    @Override
-    public void onStallWarning(StallWarning stallWarning) {
-    }
-
-    @Override
     public void onException(Exception error) {
         Intent timerIntent = new Intent(context, TimerService.class);
         context.stopService(timerIntent);
@@ -167,6 +149,25 @@ public class StreamListener implements StatusListener {
         error.printStackTrace();
     }
 
+
+    @Override
+    public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
+
+    }
+
+    @Override
+    public void onTrackLimitationNotice(int i) {
+    }
+
+    @Override
+    public void onScrubGeo(long l, long l1) {
+
+    }
+
+    @Override
+    public void onStallWarning(StallWarning stallWarning) {
+    }
+
     private void broadcastTweet() {
         wordCount++;
         // Send the word count to the fragments so that the UI updates
@@ -176,5 +177,4 @@ public class StreamListener implements StatusListener {
         // Send the tweet received to the TweetPostedFragment
         context.sendBroadcast(intentUpdateUI);
     }
-
 }

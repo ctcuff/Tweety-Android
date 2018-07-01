@@ -21,8 +21,8 @@ import android.widget.TextView;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.adapters.TweetViewAdapter;
-import com.camtech.android.tweetbot.models.Tweet;
 import com.camtech.android.tweetbot.core.StreamListener;
+import com.camtech.android.tweetbot.models.Tweet;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.squareup.picasso.Picasso;
 
@@ -203,20 +203,22 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
             if (intent.getExtras() != null) {
                 // Get the tweet object passed from the stream listener
                 Tweet tweet = intent.getExtras().getParcelable(StreamListener.NEW_TWEET_BROADCAST);
+
                 // If the keyword has changed, we need to reset the recycler view
                 // so the screen doesn't get too crowded
-                if (tweet != null && currentKeyWord.equals(tweet.getKeyWord())) {
-                    tweets.add(tweet);
-                    viewAdapter.notifyItemInserted(tweets.size() - 1);
-                } else {
-                    // The keyword has changed so we reset
-                    // the array list and the adapter
-                    currentKeyWord = tweet != null ? tweet.getKeyWord() : "";
-                    tweets = new ArrayList<>();
-                    viewAdapter.reset(tweets);
-
-                    tweets.add(tweet);
-                    viewAdapter.notifyItemInserted(tweets.size() - 1);
+                if (tweet != null) {
+                    if (currentKeyWord.equals(tweet.getKeyWord())) {
+                        tweets.add(tweet);
+                        viewAdapter.notifyItemInserted(tweets.size() - 1);
+                    } else {
+                        // The keyword has changed so we reset
+                        // the array list and the adapter
+                        currentKeyWord = tweet.getKeyWord();
+                        tweets = new ArrayList<>();
+                        viewAdapter.reset(tweets);
+                        tweets.add(tweet);
+                        viewAdapter.notifyItemInserted(tweets.size() - 1);
+                    }
                 }
                 // If the recycler view is at the bottom, we'll want to make sure it automatically
                 // scrolls to the bottom when a new tweet comes in. This way the user doesn't
