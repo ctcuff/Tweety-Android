@@ -15,6 +15,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +39,7 @@ import com.camtech.android.tweetbot.utils.TwitterUtils;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import twitter4j.Status;
 
 /**
@@ -45,10 +47,12 @@ import twitter4j.Status;
  * See {@link StreamListener#onStatus(Status)}
  */
 public class OccurrencesFragment extends Fragment {
+    private final String TAG = OccurrencesFragment.class.getSimpleName();
     private final String KEYWORD_KEY = "keyword";
     private final String OCCURRENCE_KEY = "occurrence";
-    private  int numOccurrences;
-    private  String keyWord;
+    private int numOccurrences;
+    private int wordCount;
+    private String keyWord;
     private AlertDialog resetKeyWordDialog;
     private static int timeRemaining;
     private Intent timerIntent;
@@ -80,62 +84,82 @@ public class OccurrencesFragment extends Fragment {
             tvKeyword.setText(getString(R.string.tv_keyword, keyWord));
             tvNumOccurrences.setText(String.valueOf(numOccurrences));
         }
-        startStop.setOnClickListener(v -> {
-            vibrate();
-            // Since this button acts as both a starting and a stopping button,
-            // we have to check if the service is running before we start it,
-            if (!ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
-                if (!TwitterUtils.isUserLoggedIn()) {
-                    Snackbar.make(root, "Please login to your Twitter account", Snackbar.LENGTH_LONG)
-                            .setAction("LOGIN", view -> startActivity(new Intent(getContext(), SettingsActivity.class)))
-                            .show();
-                    return;
-                }
-                // Can't start the service if we're waiting for
-                // the timer to finish
-                if (!ServiceUtils.isServiceRunning(requireContext(), TimerService.class)) {
-                    Intent twitterIntent = new Intent(getContext(), TwitterService.class);
-                    // Tell the TwitterService what word we're listening for
-                    twitterIntent.putExtra(Intent.EXTRA_TEXT, keyWord);
-                    requireContext().startService(twitterIntent);
+        return rootView;
+    }
+
+    @OnClick(R.id.bt_start_stop)
+    void startStopService() {
+        vibrate();
+        // Since this button acts as both a starting and a stopping button,
+        // we have to check if the service is running before we start it,
+        if (!ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
+            if (!TwitterUtils.isUserLoggedIn()) {
+                Snackbar.make(root, "Please login to your Twitter account", Snackbar.LENGTH_LONG)
+                        .setAction("LOGIN", view -> startActivity(new Intent(getContext(), SettingsActivity.class)))
+                        .show();
+                return;
+            }
+            // Can't start the service if we're waiting for the timer to finish
+            if (!ServiceUtils.isServiceRunning(requireContext(), TimerService.class)) {
+                Intent twitterIntent = new Intent(getContext(), TwitterService.class);
+                // Tell the TwitterService what word we're listening for
+                twitterIntent.putExtra(Intent.EXTRA_TEXT, keyWord);
+                // We only have to start the timer on a successful connection to Twitter
+                if (ServiceUtils.hasConnection(requireContext())) {
                     requireContext().startService(timerIntent);
-                } else {
-                    Toast.makeText(
-                            getContext(),
-                            getResources().getQuantityString(
-                                    R.plurals.time_remaining, timeRemaining, timeRemaining),
-                            Toast.LENGTH_SHORT).show();
                 }
+                requireContext().startService(twitterIntent);
+                // In the event that the user changed the keyword while the service
+                // was running, we need to get the vale of the new keyword from the
+                // database when the service starts
+                Pair<String, Integer> pair = DbUtils.getKeyWord(requireContext(), keyWord);
+                tvNumOccurrences.setText(pair != null && pair.second != null
+                        ? String.valueOf(pair.second)
+                        : String.valueOf(0));
+            } else {
+                Toast.makeText(
+                        getContext(),
+                        getResources().
+                                getQuantityString(R.plurals.time_remaining, timeRemaining, timeRemaining),
+                        Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // We need to wait 10 seconds between each disconnect to prevent error 420
+            if (timeRemaining >= 20) {
+                int disconnectTime = timeRemaining - 20;
+                Toast.makeText(
+                        getContext(),
+                        getResources().getQuantityString(
+                                R.plurals.disconnect_time_remaining, disconnectTime, disconnectTime),
+                        Toast.LENGTH_SHORT).show();
             } else {
                 requireContext().stopService(new Intent(getContext(), TwitterService.class));
                 requireContext().stopService(timerIntent);
                 requireContext().startService(timerIntent);
             }
-        });
+        }
+    }
 
-        tvKeyword.setOnClickListener(v -> {
-            vibrate();
-            changeKeyword();
-        });
-
-        graphImage.setOnClickListener(v -> {
-            vibrate();
-            startActivity(new Intent(getContext(), HistoryActivity.class));
-        });
-
-        settingsImage.setOnClickListener(v -> {
-            vibrate();
-            startActivity(new Intent(getContext(), SettingsActivity.class));
-        });
-        return rootView;
+    @OnClick({R.id.tv_keyword, R.id.iv_graph, R.id.iv_settings})
+    void launchActivities(View v) {
+        vibrate();
+        switch (v.getId()) {
+            case R.id.iv_graph:
+                startActivity(new Intent(getContext(), HistoryActivity.class));
+                break;
+            case R.id.iv_settings:
+                startActivity(new Intent(getContext(), SettingsActivity.class));
+                break;
+            case R.id.tv_keyword:
+                changeKeyword();
+                break;
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
         requireContext().unregisterReceiver(updateButtonReceiver);
-        requireContext().unregisterReceiver(timeRemainingReceiver);
-
     }
 
     @Override
@@ -156,19 +180,8 @@ public class OccurrencesFragment extends Fragment {
             }
         }
         Pair<String, Integer> pair = DbUtils.getKeyWord(requireContext(), keyWord);
-        // Odds are, onResume will probably be called while the service is running.
-        // If it is, we'll want to get the number of occurrences saved from
-        // onSavedInstanceState. If not, we'll get the last saved value from the database
-        if (!ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
-            if (pair != null) {
-                tvKeyword.setText(getString(R.string.tv_keyword, pair.first));
-                tvNumOccurrences.setText(String.valueOf(pair.second));
-            } else {
-                tvNumOccurrences.setText(String.valueOf(0));
-            }
-        } else {
-            tvNumOccurrences.setText(String.valueOf(numOccurrences));
-        }
+        if (pair == null) tvNumOccurrences.setText(String.valueOf(0));
+
         updateButtonText();
     }
 
@@ -176,7 +189,7 @@ public class OccurrencesFragment extends Fragment {
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(KEYWORD_KEY, keyWord);
-        outState.putInt(OCCURRENCE_KEY, numOccurrences);
+        outState.putInt(OCCURRENCE_KEY, wordCount);
     }
 
     @Override
@@ -192,6 +205,7 @@ public class OccurrencesFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         requireContext().unregisterReceiver(occurrencesReceiver);
+        requireContext().unregisterReceiver(timeRemainingReceiver);
     }
 
     private void updateButtonText() {
@@ -248,27 +262,20 @@ public class OccurrencesFragment extends Fragment {
                 // we'll then check if the word already exists in the database
                 if (!keyWordFromTextView.equals(keyWord)) {
                     Pair<String, Integer> pair = DbUtils.getKeyWord(getContext(), keyWordFromTextView);
-                    // The word exists in the database so we'll grab the pair
-                    // and set the views
+                    // The word exists in the database so we'll grab the pair and set the views
                     if (pair != null) {
                         keyWord = pair.first;
-                        numOccurrences = pair.second != null ? pair.second : 0;
                         tvKeyword.setText(getString(R.string.tv_keyword, pair.first));
-                        tvNumOccurrences.setText(String.valueOf(pair.second));
+                        if (!ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
+                            tvNumOccurrences.setText(String.valueOf(pair.second));
+                        }
                     } else {
-                        // The word isn't in the database so we'll
-                        // set set the numOccurrences text view to 0
                         keyWord = keyWordFromTextView;
-                        numOccurrences = 0;
                         tvKeyword.setText(getString(R.string.tv_keyword, keyWordFromTextView));
-                        tvNumOccurrences.setText(String.valueOf(numOccurrences));
-                        DbUtils.saveKeyWord(requireContext(), keyWord, numOccurrences);
-                    }
-                    // Make sure to stop the service when the keyword has changed
-                    if (ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
-                        requireContext().stopService(new Intent(getContext(), TwitterService.class));
-                        requireContext().stopService(timerIntent);
-                        requireContext().startService(timerIntent);
+                        DbUtils.saveKeyWord(requireContext(), keyWord, 0);
+                        if (!ServiceUtils.isServiceRunning(requireContext(), TwitterService.class)) {
+                            tvNumOccurrences.setText(String.valueOf(0));
+                        }
                     }
                     resetKeyWordDialog.dismiss();
                 }
@@ -294,7 +301,7 @@ public class OccurrencesFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             // Get the updated number of occurrences from the stream listener
-            int wordCount = intent.getIntExtra(StreamListener.NUM_OCCURRENCES_EXTRA, 0);
+            wordCount = intent.getIntExtra(StreamListener.NUM_OCCURRENCES_EXTRA, 0);
             tvNumOccurrences.setText(String.valueOf(wordCount));
         }
     };

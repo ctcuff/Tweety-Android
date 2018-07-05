@@ -2,7 +2,11 @@ package com.camtech.android.tweetbot.adapters;
 
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,6 +17,7 @@ import android.widget.TextView;
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
 import com.camtech.android.tweetbot.models.Tweet;
+import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import java.util.List;
 
@@ -27,10 +32,12 @@ public class TweetViewAdapter extends RecyclerView.Adapter<TweetViewAdapter.View
     private List<Tweet> tweets;
     private Context context;
     private OnItemClickedListener onItemClickListener;
+    private SharedPreferences sharedPreferences;
 
     public TweetViewAdapter(Context context, List<Tweet> tweets) {
         this.context = context;
         this.tweets = tweets;
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     @NonNull
@@ -44,9 +51,22 @@ public class TweetViewAdapter extends RecyclerView.Adapter<TweetViewAdapter.View
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Tweet tweet = tweets.get(position);
+        int colorFromPref = Color.parseColor(
+                sharedPreferences.getString(
+                        context.getString(R.string.pref_choose_color_key),
+                        context.getString(R.string.pref_default_retweet_color)));
+        // We can only show retweets in a different color if the
+        // pref to color retweets is enabled
+        boolean canColorRetweets = sharedPreferences.getBoolean(
+                context.getString(R.string.pref_color_retweets_key),
+                context.getResources().getBoolean(R.bool.pref_color_retweets));
+
         holder.statusDate.setText(tweet.getDate());
         holder.statusUsername.setText(context.getString(R.string.status_user, tweet.getScreenName()));
-        holder.statusMessage.setText(tweet.getMessage());
+        holder.statusMessage.setText(TwitterUtils.stripUrlFromText(tweet.getMessage()));
+        holder.statusMessage.setTextColor(tweet.isRetweet() && canColorRetweets
+                ? colorFromPref
+                : ContextCompat.getColor(context, R.color.statusNormal));
     }
 
     @Override

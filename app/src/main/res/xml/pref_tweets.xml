@@ -6,6 +6,13 @@
         android:title="Stream Filters" />
 
     <CheckBoxPreference
+        android:defaultValue="@bool/pref_english_only_streaming"
+        android:key="@string/pref_english_only_key"
+        android:summaryOff="@string/pref_english_only_false"
+        android:summaryOn="@string/pref_english_only_true"
+        android:title="@string/pref_english_only_label" />
+
+    <CheckBoxPreference
         android:defaultValue="@bool/pref_show_retweets_streaming"
         android:key="@string/pref_show_retweet_streaming_key"
         android:summaryOff="@string/pref_show_retweet_streaming_false"
@@ -13,11 +20,15 @@
         android:title="@string/pref_show_retweet_streaming_label" />
 
     <CheckBoxPreference
-        android:defaultValue="@bool/pref_english_only_streaming"
-        android:key="@string/pref_english_only_key"
-        android:summaryOff="@string/pref_english_only_false"
-        android:summaryOn="@string/pref_english_only_true"
-        android:title="@string/pref_english_only_label" />
+        android:defaultValue="@bool/pref_color_retweets"
+        android:key="@string/pref_color_retweets_key"
+        android:summary="@string/pref_color_retweets_summary"
+        android:title="@string/pref_color_retweets_label" />
+
+    <Preference
+        android:defaultValue="@string/pref_default_retweet_color"
+        android:key="@string/pref_choose_color_key"
+        android:title="@string/pref_change_retweet_color_label" />
 
     <PreferenceCategory android:title="Twitter" />
 

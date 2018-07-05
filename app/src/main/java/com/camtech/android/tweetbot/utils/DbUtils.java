@@ -19,7 +19,8 @@ import static com.camtech.android.tweetbot.data.HistoryContract.HistoryEntry.CON
 public class DbUtils {
 
     private static final String TAG = DbUtils.class.getSimpleName();
-
+    // Various sort orders
+    public static final String DEFAULT_SORT = null;
     public static final String KEYWORD_ASC = COLUMN_KEYWORD + " ASC";
     public static final String KEYWORD_DESC = COLUMN_KEYWORD + " DESC";
     public static final String OCCURRENCES_ASC = COLUMN_OCCURRENCES + " ASC";

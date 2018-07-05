@@ -33,6 +33,7 @@ public class GraphActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
+        String sortOrder = getIntent().getStringExtra("sort");
 
         ImageView emptyGraphImage = findViewById(R.id.graph_icon);
         TextView emptyGraphText = findViewById(R.id.graph_text);
@@ -43,10 +44,9 @@ public class GraphActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
-        // Get the stored HashMap if it exists
-        List<Pair<String, Integer>> pairs = DbUtils.getAllKeyWords(this, null);
+        List<Pair<String, Integer>> pairs = DbUtils.getAllKeyWords(this, sortOrder);
         if (pairs == null) {
-            // There's no models, so show the empty view
+            // There's no data, so show the empty view
             emptyGraphImage.setVisibility(View.VISIBLE);
             emptyGraphText.setVisibility(View.VISIBLE);
             chart.setVisibility(View.GONE);
@@ -102,6 +102,7 @@ public class GraphActivity extends AppCompatActivity {
             chart.setScaleYEnabled(false); // Disable vertical zoom
             chart.setDoubleTapToZoomEnabled(false);
             chart.setDescription(desc);
+            chart.animateXY(3000, 3000);
         }
     }
 

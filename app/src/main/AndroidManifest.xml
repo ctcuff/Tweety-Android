@@ -25,9 +25,14 @@
         </activity>
         <activity
             android:name=".activities.HistoryActivity"
+            android:configChanges="orientation|screenSize"
             android:theme="@style/NoActionBar" />
-        <activity android:name=".activities.GraphActivity" />
+        <activity
+            android:name=".activities.GraphActivity"
+            android:configChanges="orientation|screenSize" />
         <activity android:name=".activities.SettingsActivity" />
+
+        <!--Handles the screen the user sees when they login-->
         <activity
             android:name="com.twitter.sdk.android.core.identity.OAuthActivity"
             android:configChanges="orientation|screenSize" />

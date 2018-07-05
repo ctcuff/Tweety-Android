@@ -66,7 +66,7 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
     }
 
     public interface OnItemClickListener {
-        void onClick(Pair<String, Integer> pair, int position);
+        void onItemClicked(Pair<String, Integer> pair, int position);
     }
 
     class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -84,7 +84,7 @@ public class HistoryViewAdapter extends RecyclerView.Adapter<HistoryViewAdapter.
 
         @Override
         public void onClick(View v) {
-           clickListener.onClick(pairs.get(getAdapterPosition()), getAdapterPosition());
+           clickListener.onItemClicked(pairs.get(getAdapterPosition()), getAdapterPosition());
         }
     }
 }

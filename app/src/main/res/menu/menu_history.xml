@@ -3,5 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/clear_history"
         android:title="@string/clear_history"
-        app:showAsAction="always"/>
+        android:icon="@drawable/ic_delete_forever_black_24dp"
+        app:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/sort_order"
+        android:title="@string/menu_sort_by"
+        android:icon="@drawable/ic_sort_black_24dp"
+        app:showAsAction="ifRoom"/>
 </menu>

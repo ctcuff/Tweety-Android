@@ -26,6 +26,7 @@ public class Tweet implements Parcelable {
     private String message;
     private String keyWord;
     private long id;
+    private boolean isRetweet;
 
     /**
      * Constructs a new tweet object.
@@ -39,6 +40,7 @@ public class Tweet implements Parcelable {
      * @param message         The tweet text.
      * @param keyWord         The keyword that was used to filter the tweet.
      * @param id              The id of the tweet
+     * @param isRetweet       If this tweet was retweeted by someone else
      */
     public Tweet(
             String date,
@@ -48,7 +50,8 @@ public class Tweet implements Parcelable {
             String userProfilePic,
             String message,
             String keyWord,
-            long id) {
+            long id,
+            boolean isRetweet) {
 
         this.date = date;
         this.screenName = screenName;
@@ -58,8 +61,8 @@ public class Tweet implements Parcelable {
         this.message = message;
         this.keyWord = keyWord;
         this.id = id;
+        this.isRetweet = isRetweet;
     }
-
 
     private Tweet(Parcel in) {
         date = in.readString();
@@ -70,7 +73,20 @@ public class Tweet implements Parcelable {
         message = in.readString();
         keyWord = in.readString();
         id = in.readLong();
+        isRetweet = in.readByte() != 0;
     }
+
+    public static final Creator<Tweet> CREATOR = new Creator<Tweet>() {
+        @Override
+        public Tweet createFromParcel(Parcel in) {
+            return new Tweet(in);
+        }
+
+        @Override
+        public Tweet[] newArray(int size) {
+            return new Tweet[size];
+        }
+    };
 
     @Override
     public int describeContents() {
@@ -87,19 +103,8 @@ public class Tweet implements Parcelable {
         dest.writeString(message);
         dest.writeString(keyWord);
         dest.writeLong(id);
+        dest.writeByte((byte) (isRetweet ? 1 : 0));
     }
-
-    public static final Creator<Tweet> CREATOR = new Creator<Tweet>() {
-        @Override
-        public Tweet createFromParcel(Parcel in) {
-            return new Tweet(in);
-        }
-
-        @Override
-        public Tweet[] newArray(int size) {
-            return new Tweet[size];
-        }
-    };
 
     public String getDate() {
         return date;
@@ -131,5 +136,9 @@ public class Tweet implements Parcelable {
 
     public long getId() {
         return id;
+    }
+
+    public boolean isRetweet() {
+        return isRetweet;
     }
 }

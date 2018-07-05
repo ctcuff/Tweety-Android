@@ -5,12 +5,16 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.preference.CheckBoxPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.preference.PreferenceManager;
+import android.support.v7.preference.PreferenceScreen;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
@@ -24,6 +28,7 @@ import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.TwitterAuthProvider;
+import com.pes.androidmaterialcolorpickerdialog.ColorPicker;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
 import com.twitter.sdk.android.core.TwitterException;
@@ -41,10 +46,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     private SettingsActivity settingsActivity;
     private TwitterLoginButton twitterLoginButton;
     private AlertDialog loginDialog;
+    private ColorPicker colorPicker;
+    private SharedPreferences sharedPreferences;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -56,20 +64,54 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     }
 
     @Override
+
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
         addPreferencesFromResource(R.xml.pref_tweets);
-        findPreference(getString(R.string.pref_logout_key)).setOnPreferenceClickListener(this);
-        findPreference(getString(R.string.pref_sign_in_key)).setOnPreferenceClickListener(this);
+        PreferenceScreen preferenceScreen = getPreferenceScreen();
+        // Loop through each pref to set a click and pref change listener
+        // as well as disable/enable prefs as need be
+        for (int i = 0; i < preferenceScreen.getPreferenceCount(); i++) {
+            Preference p = preferenceScreen.getPreference(i);
+            p.setOnPreferenceClickListener(this);
+            p.setOnPreferenceChangeListener(this);
+            if (p instanceof CheckBoxPreference) {
+                CheckBoxPreference c = (CheckBoxPreference) p;
+                // Disable/enable the "Color retweets" pref and the "Retweet color" pref
+                // if the "Show retweets" pref is disabled/enabled
+                if (p.getKey().equals(getString(R.string.pref_show_retweet_streaming_key))) {
+                    findPreference(getString(R.string.pref_color_retweets_key)).setEnabled(c.isChecked());
+                    findPreference(getString(R.string.pref_choose_color_key)).setEnabled(c.isChecked());
+                    // Disable/enable the "Retweet color" pref if the "Color retweets" pref
+                    // is disabled/enabled
+                } else if (p.getKey().equals(getString(R.string.pref_color_retweets_key))) {
+                    findPreference(getString(R.string.pref_choose_color_key)).setEnabled(c.isChecked());
+                }
+            }
+        }
     }
 
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-
     }
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
+        if (preference instanceof CheckBoxPreference) {
+            CheckBoxPreference c = (CheckBoxPreference) preference;
+            // If the option to color retweets isn't checked, we'll
+            // disable the option to change the retweet color
+            if (c.getKey().equals(getString(R.string.pref_color_retweets_key))) {
+                findPreference(getString(R.string.pref_choose_color_key)).setEnabled((boolean) newValue);
+            } else if (c.getKey().equals(getString(R.string.pref_show_retweet_streaming_key))) {
+                // If the option to show retweets is disabled, we'll also disable
+                // the option to color retweets and change the retweet color
+                findPreference(getString(R.string.pref_choose_color_key)).setEnabled((boolean) newValue);
+                findPreference(getString(R.string.pref_color_retweets_key)).setEnabled((boolean) newValue);
+
+            }
+        }
         return true;
     }
 
@@ -97,6 +139,29 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             } else {
                 Toast.makeText(getContext(), "You're already logged in", Toast.LENGTH_LONG).show();
             }
+        } else if (preference.getKey().equals(getString(R.string.pref_choose_color_key))) {
+            int color = Color.parseColor(
+                    sharedPreferences.getString(
+                            getString(R.string.pref_choose_color_key),
+                            getString(R.string.pref_default_retweet_color)));
+            // The color returned from shared preferences is a hex value
+            // so we have to convert it to RGB
+            int r = (color >> 16) & 0xFF;
+            int g = (color >> 8) & 0xFF;
+            int b = color & 0xFF;
+            colorPicker = new ColorPicker(requireActivity(), r, g, b);
+            colorPicker.setCallback(colorChosen -> {
+                colorPicker.dismiss();
+                // Once the color is chosen, we have to convert the color
+                // to it's hex value as a String (#FF00FF for example)
+                sharedPreferences.edit()
+                        .putString(
+                                getString(
+                                        R.string.pref_choose_color_key),
+                                String.format("#%06X", (0xFFFFFF & colorChosen)))
+                        .apply();
+            });
+            colorPicker.show();
         }
         return true;
     }
@@ -114,6 +179,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         super.onStop();
         // Gotta handle them dialog leaks
         if (loginDialog != null) loginDialog.dismiss();
+        if (colorPicker != null) colorPicker.dismiss();
     }
 
     private void showLoginDialog() {

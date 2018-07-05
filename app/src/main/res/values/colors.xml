@@ -12,4 +12,6 @@
 
     <color name="black_overlay">#66000000</color>
     <color name="twitterButton">#5BAAF4</color>
+    <color name="retweetedStatus">#085100</color>
+    <color name="statusNormal">#000</color>
 </resources>

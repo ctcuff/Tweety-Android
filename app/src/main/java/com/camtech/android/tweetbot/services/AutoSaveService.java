@@ -47,7 +47,6 @@ public class AutoSaveService extends Service {
         timer = new CountDownTimer(RUNTIME, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                Log.i(TAG, "onTick: Time left: " + millisUntilFinished / 1000);
             }
 
             @Override

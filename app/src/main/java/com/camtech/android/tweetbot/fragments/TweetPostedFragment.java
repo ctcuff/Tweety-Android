@@ -30,6 +30,7 @@ import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import twitter4j.Status;
 
 /**
@@ -57,15 +58,6 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_status_posted, container, false);
         ButterKnife.bind(this, rootView);
-
-        fabScrollToBottom.setOnClickListener(v -> recyclerView.smoothScrollToPosition(tweets.size()));
-        fabScrollToTop.setOnClickListener(v -> recyclerView.smoothScrollToPosition(0));
-        fabClear.setOnClickListener(v -> {
-            tweets = new ArrayList<>();
-            viewAdapter.reset(tweets);
-            emptyView.setVisibility(View.VISIBLE);
-        });
-
         // Re-load the array list from the saved state. This happens when
         // the device is rotated or in the event that the user leaves the
         // app then re-opens it. We also have to keep track of the current
@@ -93,6 +85,23 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
         else emptyView.setVisibility(View.GONE);
 
         return rootView;
+    }
+
+    @OnClick({R.id.fab_clear, R.id.fab_scroll_to_bottom, R.id.fab_scroll_to_top})
+    void onFabClick(View v) {
+        switch (v.getId()) {
+            case R.id.fab_clear:
+                tweets = new ArrayList<>();
+                viewAdapter.reset(tweets);
+                emptyView.setVisibility(View.VISIBLE);
+                break;
+            case R.id.fab_scroll_to_bottom:
+                recyclerView.smoothScrollToPosition(tweets.size());
+                break;
+            case R.id.fab_scroll_to_top:
+                recyclerView.smoothScrollToPosition(0);
+                break;
+        }
     }
 
     @Override

@@ -10,6 +10,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.util.Pair;
 import android.support.v7.preference.PreferenceManager;
 import android.text.format.DateFormat;
+import android.util.Log;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.models.Tweet;
@@ -68,7 +69,7 @@ public class StreamListener implements StatusListener {
         String userDescription = status.getUser().getDescription();
         long id = status.getId();
         // Check to see if the tweet is a re-tweet
-        boolean wasRetweet = status.isRetweet();
+        boolean isRetweet = status.isRetweet();
         // Check to see if the tweet was in English
         boolean isEnglish = status.getLang().equals("en");
         // Load the boolean values from the checkbox preference in the settings fragment
@@ -82,18 +83,18 @@ public class StreamListener implements StatusListener {
         // Package the tweet into an intent so it can be sent via broadcast
         intentUpdateUI.putExtra(
                 NEW_TWEET_BROADCAST,
-                new Tweet(date, screenName, name, userDescription, userProfilePic, message, keyWord, id));
+                new Tweet(date, screenName, name, userDescription, userProfilePic, message, keyWord, id, isRetweet));
 
         if (canShowRetweets && restrictToEnglish) {
             if (isEnglish) broadcastTweet();
         }
 
         if (!canShowRetweets && restrictToEnglish) {
-            if (!wasRetweet && isEnglish) broadcastTweet();
+            if (!isRetweet && isEnglish) broadcastTweet();
         }
 
         if (!canShowRetweets && !restrictToEnglish) {
-            if (!wasRetweet) broadcastTweet();
+            if (!isRetweet) broadcastTweet();
         }
 
         if (canShowRetweets && !restrictToEnglish) {
@@ -105,15 +106,16 @@ public class StreamListener implements StatusListener {
     @Override
     public void onException(Exception error) {
         Intent timerIntent = new Intent(context, TimerService.class);
-        context.stopService(timerIntent);
-        context.startService(timerIntent);
+
         context.stopService(new Intent(context, TwitterService.class));
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         AudioManager audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Exception");
-        builder.setStyle(new NotificationCompat.BigTextStyle());
+        NotificationCompat.BigTextStyle style = new NotificationCompat.BigTextStyle();
+        style.setBigContentTitle(context.getString(R.string.notification_title_error));
+
         builder.setSmallIcon(R.drawable.ic_stat_message);
         builder.setContentTitle(context.getString(R.string.notification_title_error));
         builder.setColor(context.getResources().getColor(R.color.colorNotificationError));
@@ -126,10 +128,14 @@ public class StreamListener implements StatusListener {
             // Error 420 occurs when there are too many auth
             // requests in a short amount of time
             if (error.getMessage().contains("420")) {
-                builder.setContentText("Too many requests in a short amount of time. Please wait 60 seconds before trying again");
+                int retryAfter = 120; // 120s ---> 2 minutes
+                timerIntent.putExtra(TimerService.INTENT_EXTRA_TIME, retryAfter * 1_000L);
+                builder.setContentText(context.getString(R.string.stream_error_420));
             } else {
-                builder.setContentText("An unexpected error occurred");
+                builder.setContentText(context.getString(R.string.stream_unknown_error));
             }
+            context.stopService(timerIntent);
+            context.startService(timerIntent);
             // Don't vibrate if the user's device is on silent
             if (audio != null) {
                 switch (audio.getRingerMode()) {
@@ -143,6 +149,7 @@ public class StreamListener implements StatusListener {
                 }
             }
             if (manager != null) {
+                builder.setStyle(style);
                 manager.notify(2, builder.build());
             }
         }

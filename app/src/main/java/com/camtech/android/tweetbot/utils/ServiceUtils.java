@@ -2,6 +2,8 @@ package com.camtech.android.tweetbot.utils;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 import static android.app.ActivityManager.RunningServiceInfo;
 
@@ -20,5 +22,15 @@ public class ServiceUtils {
             }
         }
         return false;
+    }
+
+    public static boolean hasConnection(Context context) {
+        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = null;
+        if (manager != null) {
+            networkInfo = manager.getActiveNetworkInfo();
+        }
+
+        return networkInfo != null && networkInfo.isConnectedOrConnecting();
     }
 }

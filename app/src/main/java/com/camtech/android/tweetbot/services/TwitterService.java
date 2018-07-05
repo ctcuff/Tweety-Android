@@ -10,17 +10,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.util.Pair;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.MainActivity;
 import com.camtech.android.tweetbot.core.StreamListener;
+import com.camtech.android.tweetbot.models.Keys;
 import com.camtech.android.tweetbot.utils.DbUtils;
+import com.camtech.android.tweetbot.utils.ServiceUtils;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
 
 import twitter4j.ConnectionLifeCycleListener;
@@ -34,8 +36,7 @@ import twitter4j.TwitterStreamFactory;
  */
 public class TwitterService extends Service {
     public static final String TAG = TwitterService.class.getSimpleName();
-    private  TwitterStream twitterStream;
-    private final String INTENT_STOP_SERVICE = "stopService";
+    private TwitterStream twitterStream;
     private String keyWord;
     private NotificationManager notificationManager;
     private NotificationCompat.Builder builder;
@@ -59,7 +60,6 @@ public class TwitterService extends Service {
         connectivityReceiver = new ConnectivityReceiver();
         registerReceiver(connectivityReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         // Receiver to listen for when the notification is clicked
-        registerReceiver(stopServiceReceiver, new IntentFilter(INTENT_STOP_SERVICE));
         registerReceiver(numOccurrencesReceiver, new IntentFilter(StreamListener.OCCURRENCES_INTENT_FILTER));
     }
 
@@ -77,9 +77,35 @@ public class TwitterService extends Service {
         FilterQuery query = new FilterQuery(keyWord);
         // Used to listen for a specific word or phrase
         StreamListener streamListener = new StreamListener(this, keyWord);
-        twitterStream = new TwitterStreamFactory(TwitterUtils.getConfig(this)).getInstance();
+        TwitterStreamFactory twitterStreamFactory = new TwitterStreamFactory();
+        twitterStream = twitterStreamFactory.getInstance();
+        twitterStream.setOAuthConsumer(Keys.CONSUMER_KEY, Keys.CONSUMER_KEY_SECRET);
+        twitterStream.setOAuthAccessToken(TwitterUtils.getAccessToken(this));
+
         twitterStream.addListener(streamListener);
         twitterStream.filter(query);
+
+        // Construct the notification to show all text when swiped down
+        builder = new NotificationCompat.Builder(this, "TwitterService");
+        builder.setStyle(new NotificationCompat
+                .BigTextStyle()
+                .setSummaryText(keyWord)
+                .bigText(getString(R.string.notification_stream_occurrences, keyWord))
+                .setBigContentTitle(getString(R.string.notification_title)));
+        // We have to set the title and summary twice so that they'll
+        // show when the notification initially drops down
+        builder.setContentText(getString(R.string.notification_stream_occurrences, keyWord));
+        builder.setContentTitle(getString(R.string.notification_title));
+        builder.setShowWhen(false);
+        builder.setAutoCancel(false);
+        builder.setOngoing(true);
+        builder.setSmallIcon(R.drawable.ic_stat_message);
+        builder.setVibrate(new long[]{}); // If we don't include this, the notification won't drop down
+        builder.setColor(getResources().getColor(R.color.colorOccurrences));
+        builder.setUsesChronometer(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
+        }
 
         // Intent to open the OccurrencesFragment when the "OPEN" button is clicked
         Intent openActivityIntent = new Intent(this, MainActivity.class);
@@ -92,38 +118,13 @@ public class TwitterService extends Service {
                 openActivityIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT);
 
-        // Construct the notification to show all text when swiped down
-        builder = new NotificationCompat.Builder(this, "TwitterService");
-        builder.setStyle(new NotificationCompat.BigTextStyle());
-        builder.setShowWhen(false);
-        builder.setAutoCancel(false);
-        builder.setOngoing(true);
-        builder.setSmallIcon(R.drawable.ic_stat_message);
-        builder.setContentTitle(getString(R.string.notification_title));
-        builder.addAction(R.drawable.ic_stat_message, "OPEN", openActivity);
-        builder.setVibrate(new long[]{}); // If we don't include this, the notification won't drop down
-        builder.setColor(getResources().getColor(R.color.colorOccurrences));
-        builder.setUsesChronometer(true);
-        builder.setContentText(getString(R.string.notification_stream_occurrences, keyWord));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            builder.setPriority(NotificationManager.IMPORTANCE_HIGH);
-        }
-
-        // Intent to stop the service when the notification is clicked
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                this,
-                ID_STREAM_CONNECTED,
-                new Intent(INTENT_STOP_SERVICE),
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
-        builder.setContentIntent(pendingIntent);
+        builder.setContentIntent(openActivity);
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(ID_STREAM_CONNECTED, builder.build());
         twitterStream.addConnectionLifeCycleListener(new ConnectionLifeCycleListener() {
             @Override
             public void onConnect() {
-
             }
 
             @Override
@@ -147,21 +148,11 @@ public class TwitterService extends Service {
         cleanUpAndSave();
         notificationManager.cancel(ID_STREAM_CONNECTED);
         sendBroadcast(new Intent(BROADCAST_UPDATE));
-        unregisterReceiver(stopServiceReceiver);
         unregisterReceiver(connectivityReceiver);
         unregisterReceiver(numOccurrencesReceiver);
         stopService(new Intent(this, AutoSaveService.class));
     }
 
-    public boolean hasConnection() {
-        ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = null;
-        if (manager != null) {
-            networkInfo = manager.getActiveNetworkInfo();
-        }
-
-        return networkInfo != null && networkInfo.isConnectedOrConnecting();
-    }
 
     @SuppressLint("StaticFieldLeak")
     private void cleanUpAndSave() {
@@ -173,7 +164,13 @@ public class TwitterService extends Service {
             protected Void doInBackground(Void... voids) {
                 twitterStream.cleanUp();
                 twitterStream.shutdown();
-                DbUtils.saveKeyWord(getBaseContext(), keyWord, occurrences);
+                // We need to check if the number in the database is greater than the
+                // value we have now so that the number doesn't get overridden with a
+                // smaller number
+                Pair<String, Integer> pair = DbUtils.getKeyWord(getBaseContext(), keyWord);
+                if (pair != null && pair.second != null && occurrences > pair.second) {
+                    DbUtils.saveKeyWord(getBaseContext(), keyWord, occurrences);
+                }
                 return null;
             }
         }.execute();
@@ -187,31 +184,19 @@ public class TwitterService extends Service {
     };
 
     /**
-     * Triggers when the notification itself  is clicked; used to stop the service
-     */
-    private BroadcastReceiver stopServiceReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            stopSelf();
-            Intent timerIntent = new Intent(getBaseContext(), TimerService.class);
-            stopService(timerIntent);
-            startService(timerIntent);
-        }
-    };
-
-    /**
      * Receiver to listen for changes in network connection.
      * Since this isn't registered in the Manifest, this receiver
      * only lives within the lifecycle of the service.
      */
     public class ConnectivityReceiver extends BroadcastReceiver {
         private final int ID_CONNECTION_LOST = 1;
+
         @Override
         public void onReceive(Context context, Intent intent) {
             // Mobile connection has dropped so we need to stop the service
             AudioManager audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
             if (intent.getAction() != null && intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                if (!hasConnection()) {
+                if (!ServiceUtils.hasConnection(context)) {
                     builder = new NotificationCompat.Builder(context, "ConnectivityReceiver");
                     builder.setContentTitle(getString(R.string.notification_title));
                     builder.setSmallIcon(R.drawable.ic_stat_message);

@@ -14,6 +14,7 @@ import com.twitter.sdk.android.core.TwitterCore;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
 import twitter4j.conf.Configuration;
 import twitter4j.conf.ConfigurationBuilder;
 
@@ -55,6 +56,20 @@ public class TwitterUtils {
                 .setOAuthAccessTokenSecret(tokenSecret);
         return cb.build();
     }
+
+    public static AccessToken getAccessToken(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(
+                context.getString(R.string.pref_auth),
+                Context.MODE_PRIVATE);
+        String token = sharedPreferences.getString(context.getString(R.string.pref_token), null);
+        String tokenSecret = sharedPreferences.getString(context.getString(R.string.pref_token_secret), null);
+        if (token == null || tokenSecret == null) {
+            Log.i(TAG, "getAccessToken: Tokens were null");
+            return null;
+        }
+        return new AccessToken(token, tokenSecret);
+    }
+
 
     /**
      * Uses the token and token secret stored in shared preferences
@@ -160,5 +175,13 @@ public class TwitterUtils {
      */
     private static String createTwitterStatusUrlForWeb(String screenName, long statusId) {
         return String.format("https://twitter.com/%s/status/%s", screenName, String.valueOf(statusId));
+    }
+    /**
+     * Gets rid of any URLs from a string. (Sometimes Twitter tweets/statuses have links)
+     * that are cut off making them un-clickable, or might lead to a sketchy/inappropriate website
+     * so it's best to just remove them)
+     */
+    public static String stripUrlFromText(String message) {
+        return message.replaceAll("http\\S+", "");
     }
 }

@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,6 +31,9 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     private HistoryViewAdapter viewAdapter;
     private AlertDialog deleteWordDialog;
     private AlertDialog clearHistoryDialog;
+    private AlertDialog sortDialog;
+    private String orderBy = DbUtils.DEFAULT_SORT;
+    private int itemSelected = 0; // Used to keep track of the current radio button selected
 
     @BindView(R.id.tv_no_history) TextView tvNoHistory;
     @BindView(R.id.toolbar) Toolbar toolbar;
@@ -80,6 +84,9 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
                     clearHistory();
                 }
                 break;
+            case R.id.sort_order:
+                changeSortOrder();
+                break;
         }
         return true;
     }
@@ -88,8 +95,9 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // Start the GraphActivity when the device is rotated horizontally
+        Log.i(this.toString(), "onConfigurationChanged: CALLED");
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            startActivity(new Intent(this, GraphActivity.class));
+            startActivity(new Intent(this, GraphActivity.class).putExtra("sort", orderBy));
         }
     }
 
@@ -98,10 +106,11 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         super.onStop();
         if (clearHistoryDialog != null) clearHistoryDialog.dismiss();
         if (deleteWordDialog != null) deleteWordDialog.dismiss();
+        if (sortDialog != null) sortDialog.dismiss();
     }
 
     @Override
-    public void onClick(Pair<String, Integer> pair, int position) {
+    public void onItemClicked(Pair<String, Integer> pair, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Delete Keyword")
                 .setMessage("Are you sure you want to delete this word ?")
@@ -119,8 +128,8 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
 
     private void clearHistory() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setCancelable(false);
-        builder.setTitle("Clear History")
+        builder.setCancelable(false)
+                .setTitle("Clear History")
                 .setMessage("Are you want to clear your history? This can't be undone!")
                 .setPositiveButton("YES", (dialog, which) -> {
                     DbUtils.deleteAllKeyWords(this);
@@ -131,5 +140,48 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
                 .setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
         clearHistoryDialog = builder.create();
         clearHistoryDialog.show();
+    }
+
+    private void changeSortOrder() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        String[] items = {
+                "Most recent",
+                "Keyword ascending",
+                "Keyword descending",
+                "Occurrences ascending",
+                "Occurrences descending"
+        };
+        builder.setTitle("Sort by")
+                .setCancelable(false)
+                .setSingleChoiceItems(items, itemSelected, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            itemSelected = 0;
+                            orderBy = DbUtils.DEFAULT_SORT;
+                            break;
+                        case 1:
+                            itemSelected = 1;
+                            orderBy = DbUtils.KEYWORD_ASC;
+                            break;
+                        case 2:
+                            itemSelected = 2;
+                            orderBy = DbUtils.KEYWORD_DESC;
+                            break;
+                        case 3:
+                            itemSelected = 3;
+                            orderBy = DbUtils.OCCURRENCES_ASC;
+                            break;
+                        case 4:
+                            itemSelected = 4;
+                            orderBy = DbUtils.OCCURRENCES_DESC;
+                            break;
+                    }
+                    pairs = DbUtils.getAllKeyWords(this, orderBy);
+                    viewAdapter.resetAdapter(pairs);
+                    dialog.dismiss();
+                })
+                .setNegativeButton("CANCEL", (dialog, which) -> dialog.dismiss());
+        sortDialog = builder.create();
+        sortDialog.show();
     }
 }

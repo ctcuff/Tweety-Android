@@ -19,7 +19,7 @@
     <string name="username_loading">Loading…</string>
     <string name="status_running">Running</string>
     <string name="notification_stream_message">Stream connected, listening for messages. Touch to stop</string>
-    <string name="notification_stream_occurrences">Stream connected. Listening for occurrences of \"%s\". Touch to stop</string>
+    <string name="notification_stream_occurrences">Stream connected. Listening for occurrences of \"%s\". Touch to view</string>
     <string name="notification_title">TwitterStream</string>
     <string name="notification_title_error">TwitterStream Error</string>
 
@@ -42,6 +42,13 @@
     <string name="pref_english_only_label">Restrict to English</string>
     <string name="pref_english_only_true">Only English statuses will be shown</string>
     <string name="pref_english_only_false">Statuses will be shown in any language</string>
+
+    <string name="pref_color_retweets_key">color_retweets</string>
+    <string name="pref_color_retweets_label">Color retweets</string>
+    <string name="pref_color_retweets_summary">Show retweets in a different color</string>
+
+    <string name="pref_choose_color_key">choose_color</string>
+    <string name="pref_default_retweet_color">#085100</string>
 
     <string name="pref_show_retweet_status_key">show_status_rt</string>
     <string name="pref_show_retweet_status_label">Show retweets</string>
@@ -76,5 +83,9 @@
 
     <string name="content_authority">com.camtech.android.tweetbot</string>
     <string name="error_default">Error retrieving timeline</string>
+    <string name="menu_sort_by">Sort by</string>
+    <string name="stream_error_420">Woah there, you\'ve made a lot of requests recently. Please wait 2 minutes before trying again</string>
+    <string name="stream_unknown_error">An unexpected error occurred</string>
+    <string name="pref_change_retweet_color_label">Change retweet color</string>
 
 </resources>

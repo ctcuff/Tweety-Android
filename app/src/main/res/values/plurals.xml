@@ -5,4 +5,16 @@
         <item quantity="one">Please wait %d second before your next query</item>
         <item quantity="other">Please wait %d seconds before your next query</item>
     </plurals>
+
+    <plurals name="disconnect_time_remaining">
+        <item quantity="zero">Please wait %d seconds before disconnecting</item>
+        <item quantity="one">Please wait %d second before disconnecting</item>
+        <item quantity="other">Please wait %d seconds before disconnecting</item>
+    </plurals>
+
+    <plurals name="time_remaining_error">
+        <item quantity="zero">Please wait %d seconds before retrying</item>
+        <item quantity="one">Please wait %d second before retrying</item>
+        <item quantity="other">Please wait %d seconds before retrying</item>
+    </plurals>
 </resources>

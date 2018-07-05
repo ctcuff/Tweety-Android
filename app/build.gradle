@@ -49,6 +49,7 @@ dependencies {
     }
     compile 'com.google.firebase:firebase-core:16.0.0'
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.2.50"
+    compile 'com.pes.materialcolorpicker:library:1.2.0'
 }
 apply plugin: 'com.google.gms.google-services'
 repositories {
