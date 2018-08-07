@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <plurals name="time_remaining">
-        <item quantity="zero">Please wait %d seconds before your next query</item>
-        <item quantity="one">Please wait %d second before your next query</item>
-        <item quantity="other">Please wait %d seconds before your next query</item>
+        <item quantity="zero">Please wait %d seconds before your next search</item>
+        <item quantity="one">Please wait %d second before your next search</item>
+        <item quantity="other">Please wait %d seconds before your next search</item>
     </plurals>
 
     <plurals name="disconnect_time_remaining">
