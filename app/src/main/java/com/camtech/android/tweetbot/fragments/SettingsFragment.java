@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.preference.CheckBoxPreference;
 import android.support.v7.preference.Preference;
@@ -20,6 +21,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.cameron.materialcolorpicker.ColorPicker;
+import com.cameron.materialcolorpicker.ColorPickerCallback;
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.SettingsActivity;
 import com.camtech.android.tweetbot.services.TwitterService;
@@ -28,7 +31,6 @@ import com.camtech.android.tweetbot.utils.TwitterUtils;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.TwitterAuthProvider;
-import com.pes.androidmaterialcolorpickerdialog.ColorPicker;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
 import com.twitter.sdk.android.core.TwitterException;
@@ -109,7 +111,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 // the option to color retweets and change the retweet color
                 findPreference(getString(R.string.pref_choose_color_key)).setEnabled((boolean) newValue);
                 findPreference(getString(R.string.pref_color_retweets_key)).setEnabled((boolean) newValue);
-
             }
         }
         return true;
@@ -145,22 +146,27 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                             getString(R.string.pref_choose_color_key),
                             getString(R.string.pref_default_retweet_color)));
             // The color returned from shared preferences is a hex value
-            // so we have to convert it to RGB
-            int r = (color >> 16) & 0xFF;
-            int g = (color >> 8) & 0xFF;
-            int b = color & 0xFF;
-            colorPicker = new ColorPicker(requireActivity(), r, g, b);
-            colorPicker.setCallback(colorChosen -> {
-                colorPicker.dismiss();
-                // Once the color is chosen, we have to convert the color
-                // to it's hex value as a String (#FF00FF for example)
-                sharedPreferences.edit()
-                        .putString(
-                                getString(
-                                        R.string.pref_choose_color_key),
-                                String.format("#%06X", (0xFFFFFF & colorChosen)))
-                        .apply();
-            });
+            // so we have to convert it to ARGB
+            int alpha = Color.alpha(color);
+            int r = Color.red(color);
+            int g = Color.green(color);
+            int b = Color.blue(color);
+            colorPicker = new ColorPicker(requireActivity(), alpha, r, g, b)
+                    .setCloseOnBackPressed(true)
+                    .setDialogButtonTextColor(ContextCompat.getColor(requireContext(), R.color.colorPrimary))
+                    .setDialogButtonText("CONFIRM")
+                    .showButtonAsTransparent(true)
+                    .setCallback(new ColorPickerCallback() {
+                        @Override
+                        public void onColorChosen(int color, String hex, String hexNoAlpha) {
+                            sharedPreferences.edit().putString(getString(R.string.pref_choose_color_key), hex).apply();
+                        }
+
+                        @Override
+                        public void onColorChanged(int color, String hex, String hexNoAlpha) {
+
+                        }
+                    });
             colorPicker.show();
         }
         return true;

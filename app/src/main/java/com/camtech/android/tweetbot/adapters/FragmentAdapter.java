@@ -5,12 +5,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
 import com.camtech.android.tweetbot.fragments.OccurrencesFragment;
-import com.camtech.android.tweetbot.fragments.StatusSearchFragment;
 import com.camtech.android.tweetbot.fragments.TweetPostedFragment;
 
 public class FragmentAdapter extends FragmentPagerAdapter {
-
-    private final int NUM_FRAGMENTS = 2;
 
     public FragmentAdapter(FragmentManager fm) {
         super(fm);
@@ -30,7 +27,7 @@ public class FragmentAdapter extends FragmentPagerAdapter {
 
     @Override
     public int getCount() {
-        return NUM_FRAGMENTS;
+        return 2;
     }
 
 }

@@ -20,7 +20,6 @@ import android.support.v4.util.Pair;
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.activities.MainActivity;
 import com.camtech.android.tweetbot.core.StreamListener;
-import com.camtech.android.tweetbot.models.Keys;
 import com.camtech.android.tweetbot.utils.DbUtils;
 import com.camtech.android.tweetbot.utils.ServiceUtils;
 import com.camtech.android.tweetbot.utils.TwitterUtils;
@@ -77,10 +76,12 @@ public class TwitterService extends Service {
         FilterQuery query = new FilterQuery(keyWord);
         // Used to listen for a specific word or phrase
         StreamListener streamListener = new StreamListener(this, keyWord);
-        TwitterStreamFactory twitterStreamFactory = new TwitterStreamFactory();
-        twitterStream = twitterStreamFactory.getInstance();
-        twitterStream.setOAuthConsumer(Keys.CONSUMER_KEY, Keys.CONSUMER_KEY_SECRET);
-        twitterStream.setOAuthAccessToken(TwitterUtils.getAccessToken(this));
+//        TwitterStreamFactory twitterStreamFactory = new TwitterStreamFactory();
+//        twitterStream = twitterStreamFactory.getInstance();
+//        twitterStream.setOAuthConsumer(Keys.CONSUMER_KEY, Keys.CONSUMER_KEY_SECRET);
+//        twitterStream.setOAuthAccessToken(TwitterUtils.getAccessToken(this));
+        twitterStream = new TwitterStreamFactory(TwitterUtils.getConfig(this)).getInstance();
+
 
         twitterStream.addListener(streamListener);
         twitterStream.filter(query);
@@ -162,7 +163,6 @@ public class TwitterService extends Service {
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected Void doInBackground(Void... voids) {
-                twitterStream.cleanUp();
                 twitterStream.shutdown();
                 // We need to check if the number in the database is greater than the
                 // value we have now so that the number doesn't get overridden with a
@@ -172,6 +172,12 @@ public class TwitterService extends Service {
                     DbUtils.saveKeyWord(getBaseContext(), keyWord, occurrences);
                 }
                 return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                super.onPostExecute(aVoid);
+                twitterStream = null;
             }
         }.execute();
     }

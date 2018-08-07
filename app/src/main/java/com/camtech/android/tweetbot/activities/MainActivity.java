@@ -16,8 +16,8 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.camtech.android.tweetbot.R;
-import com.camtech.android.tweetbot.core.StreamListener;
 import com.camtech.android.tweetbot.adapters.FragmentAdapter;
+import com.camtech.android.tweetbot.core.StreamListener;
 import com.camtech.android.tweetbot.models.Keys;
 import com.camtech.android.tweetbot.services.TimerService;
 import com.camtech.android.tweetbot.services.TwitterService;
@@ -29,7 +29,7 @@ import com.twitter.sdk.android.core.TwitterConfig;
 
 import me.relex.circleindicator.CircleIndicator;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  {
     private int wordCountFromBroadcast;
     private String keyWord;
     private boolean doubleBackPressed = false;

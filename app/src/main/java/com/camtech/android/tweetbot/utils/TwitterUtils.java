@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.support.v4.util.Pair;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -11,6 +12,10 @@ import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.models.Keys;
 import com.google.firebase.auth.FirebaseAuth;
 import com.twitter.sdk.android.core.TwitterCore;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
@@ -176,6 +181,7 @@ public class TwitterUtils {
     private static String createTwitterStatusUrlForWeb(String screenName, long statusId) {
         return String.format("https://twitter.com/%s/status/%s", screenName, String.valueOf(statusId));
     }
+
     /**
      * Gets rid of any URLs from a string. (Sometimes Twitter tweets/statuses have links)
      * that are cut off making them un-clickable, or might lead to a sketchy/inappropriate website
