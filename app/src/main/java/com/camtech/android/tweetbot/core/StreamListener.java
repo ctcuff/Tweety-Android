@@ -10,7 +10,6 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.util.Pair;
 import android.support.v7.preference.PreferenceManager;
 import android.text.format.DateFormat;
-import android.util.Log;
 
 import com.camtech.android.tweetbot.R;
 import com.camtech.android.tweetbot.models.Tweet;
@@ -22,7 +21,6 @@ import twitter4j.StallWarning;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
 import twitter4j.StatusListener;
-import twitter4j.TwitterException;
 
 /**
  * This is the core part of the app.

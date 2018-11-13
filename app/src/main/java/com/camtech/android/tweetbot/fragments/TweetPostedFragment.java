@@ -1,5 +1,6 @@
 package com.camtech.android.tweetbot.fragments;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +13,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +55,7 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
     @BindView(R.id.fab_scroll_to_bottom) FloatingActionButton fabScrollToBottom;
     @BindView(R.id.fab_scroll_to_top) FloatingActionButton fabScrollToTop;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -91,6 +94,7 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
     void onFabClick(View v) {
         switch (v.getId()) {
             case R.id.fab_clear:
+                Log.i(TAG, "Clicked, clearing statuses");
                 tweets = new ArrayList<>();
                 viewAdapter.reset(tweets);
                 emptyView.setVisibility(View.VISIBLE);

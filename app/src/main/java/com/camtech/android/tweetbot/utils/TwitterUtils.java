@@ -49,7 +49,7 @@ public class TwitterUtils {
         }
 
         ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.setDebugEnabled(true)
+        cb.setDebugEnabled(false)
                 .setOAuthConsumerKey(Keys.CONSUMER_KEY)
                 .setOAuthConsumerSecret(Keys.CONSUMER_KEY_SECRET)
                 .setOAuthAccessToken(token)
@@ -90,7 +90,7 @@ public class TwitterUtils {
         }
 
         ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.setDebugEnabled(true)
+        cb.setDebugEnabled(false)
                 .setTweetModeExtended(true)
                 .setOAuthConsumerKey(Keys.CONSUMER_KEY)
                 .setOAuthConsumerSecret(Keys.CONSUMER_KEY_SECRET)
