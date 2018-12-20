@@ -72,8 +72,7 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
             tweets = savedInstanceState.getParcelableArrayList(TAG);
             currentKeyWord = savedInstanceState.getString(CURRENT_KEYWORD_KEY);
         }
-        viewAdapter = new TweetViewAdapter(getContext(), tweets);
-        viewAdapter.setOnItemClickedListener(this);
+        viewAdapter = new TweetViewAdapter(requireContext(), tweets, this);
 
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         // The recycler view should stretch each item
@@ -165,7 +164,7 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
     }
 
     @Override
-    public void onItemClicked(View v, Tweet tweet, int position) {
+    public void onItemClicked(@NonNull View v, @NonNull Tweet tweet, int position) {
         switch (v.getId()) {
             // CardView card was clicked but we also have to check the other
             // views to make sure the click registers
@@ -181,13 +180,16 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
                 // along with a button to open the user's profile page
                 View dialogSheet = getLayoutInflater().inflate(
                         R.layout.bottom_sheet_dialog,
-                        getView().findViewById(R.id.bottom_sheet_root));
+                        getView().findViewById(R.id.bottom_sheet_root)
+                );
 
                 ImageView userProfilePic = dialogSheet.findViewById(R.id.iv_user_profile_pic);
                 Picasso.get().load(tweet.getUserProfilePic()).into(userProfilePic);
 
                 Button viewProfile = dialogSheet.findViewById(R.id.bt_view_profile);
-                viewProfile.setOnClickListener(view -> TwitterUtils.openUserProfile(getContext(), tweet.getScreenName()));
+                viewProfile.setOnClickListener(view ->
+                        TwitterUtils.openUserProfile(getContext(), tweet.getScreenName())
+                );
 
                 TextView screenName = dialogSheet.findViewById(R.id.tv_tweet_screen_name);
                 screenName.setText(getString(R.string.status_user, tweet.getScreenName()));
@@ -196,8 +198,12 @@ public class TweetPostedFragment extends Fragment implements TweetViewAdapter.On
                 name.setText(tweet.getName());
 
                 TextView userDescription = dialogSheet.findViewById(R.id.tv_user_description);
-                if (tweet.getUserDescription() == null) userDescription.setVisibility(View.GONE);
-                else userDescription.setText(tweet.getUserDescription());
+
+                if (tweet.getUserDescription() == null) {
+                    userDescription.setVisibility(View.GONE);
+                } else {
+                    userDescription.setText(tweet.getUserDescription());
+                }
 
                 bottomSheetDialog = new BottomSheetDialog(requireContext());
                 bottomSheetDialog.setContentView(dialogSheet);

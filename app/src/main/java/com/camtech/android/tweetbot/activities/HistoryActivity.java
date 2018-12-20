@@ -4,13 +4,14 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,7 +34,8 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     private AlertDialog clearHistoryDialog;
     private AlertDialog sortDialog;
     private String orderBy = DbUtils.DEFAULT_SORT;
-    private int itemSelected = 0; // Used to keep track of the current radio button selected
+    // Used to keep track of the current radio button selected
+    private int itemSelected = 0;
 
     @BindView(R.id.tv_no_history) TextView tvNoHistory;
     @BindView(R.id.toolbar) Toolbar toolbar;
@@ -60,7 +62,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
         pairs = DbUtils.getAllKeyWords(this, null);
         if (pairs != null && !pairs.isEmpty()) {
             tvNoHistory.setVisibility(View.GONE);
-            viewAdapter = new HistoryViewAdapter(this, this, pairs);
+            viewAdapter = new HistoryViewAdapter(this, pairs);
             recyclerView.setAdapter(viewAdapter);
         } else {
             tvNoHistory.setVisibility(View.VISIBLE);
@@ -95,7 +97,6 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         // Start the GraphActivity when the device is rotated horizontally
-        Log.i(this.toString(), "onConfigurationChanged: CALLED");
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             startActivity(new Intent(this, GraphActivity.class).putExtra("sort", orderBy));
         }
@@ -110,7 +111,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryViewAda
     }
 
     @Override
-    public void onItemClicked(Pair<String, Integer> pair, int position) {
+    public void onItemDeleted(@NonNull Pair<String, Integer> pair, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Delete Keyword")
                 .setMessage("Are you sure you want to delete this word ?")
