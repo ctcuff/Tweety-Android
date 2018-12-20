@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.camtech.android.tweetbot.core.StreamListener;
 
@@ -20,8 +19,6 @@ import com.camtech.android.tweetbot.core.StreamListener;
  * @see <a href="https://developer.twitter.com/en/docs/basics/response-codes.html">Twitter error codes</a>
  */
 public class TimerService extends Service {
-
-    private final String TAG = TimerService.class.getSimpleName();
 
     public static final String BROADCAST_TIME = "Timer";
     public static final String INTENT_TIME_LEFT = "timeLeft";
@@ -56,7 +53,6 @@ public class TimerService extends Service {
         timer = new CountDownTimer(timeInPref > runtime ? timeInPref : runtime, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                Log.i(TAG, "onTick: Time left: " + millisUntilFinished / 1000);
                 timeIntent.putExtra(INTENT_TIME_LEFT, millisUntilFinished / 1000);
                 sendBroadcast(timeIntent);
                 timerPref.edit().putLong(PREF_TIME_REMAINING, millisUntilFinished).apply();

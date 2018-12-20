@@ -88,4 +88,6 @@
     <string name="stream_unknown_error">An unexpected error occurred</string>
     <string name="pref_change_retweet_color_label">Change retweet color</string>
 
+    <string name="btn_seconds_remaining">Seconds left: %d</string>
+
 </resources>

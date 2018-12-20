@@ -66,6 +66,7 @@ public class OccurrencesFragment extends Fragment {
     @BindString(R.string.pref_token_secret) String prefTokenSecret;
     @BindString(R.string.default_keyword) String defaultKeyword;
 
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -98,7 +99,6 @@ public class OccurrencesFragment extends Fragment {
                         .show();
                 return;
             }
-            // Can't start the service if we're waiting for the timer to finish
             if (!ServiceUtils.isServiceRunning(requireContext(), TimerService.class)) {
                 Intent twitterIntent = new Intent(getContext(), TwitterService.class);
                 // Tell the TwitterService what word we're listening for
@@ -114,13 +114,17 @@ public class OccurrencesFragment extends Fragment {
                 Pair<String, Integer> pair = DbUtils.getKeyWord(requireContext(), keyWord);
                 tvNumOccurrences.setText(pair != null && pair.second != null
                         ? String.valueOf(pair.second)
-                        : String.valueOf(0));
+                        : String.valueOf(0)
+                );
             } else {
+                // Can't start the service if we're waiting for the timer to finish
                 Toast.makeText(
                         getContext(),
-                        getResources().
-                                getQuantityString(R.plurals.time_remaining, timeRemaining, timeRemaining),
-                        Toast.LENGTH_SHORT).show();
+                        getResources().getQuantityString(
+                                R.plurals.time_remaining, timeRemaining, timeRemaining
+                        ),
+                        Toast.LENGTH_SHORT
+                ).show();
             }
         } else {
             // We need to wait 10 seconds between each disconnect to prevent error 420
@@ -179,7 +183,9 @@ public class OccurrencesFragment extends Fragment {
             }
         }
         Pair<String, Integer> pair = DbUtils.getKeyWord(requireContext(), keyWord);
-        if (pair == null) tvNumOccurrences.setText(String.valueOf(0));
+        if (pair == null) {
+            tvNumOccurrences.setText(String.valueOf(0));
+        }
 
         updateButtonText();
     }
@@ -235,7 +241,8 @@ public class OccurrencesFragment extends Fragment {
 
         View view = getLayoutInflater().inflate(
                 R.layout.change_keyword_dialog,
-                getView().findViewById(R.id.dialog_layout_root));
+                getView().findViewById(R.id.dialog_layout_root)
+        );
 
         EditText etChangeKeyword = view.findViewById(R.id.et_query);
         TextInputLayout textInputLayout = view.findViewById(R.id.text_input_layout);
@@ -321,6 +328,11 @@ public class OccurrencesFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             timeRemaining = (int) intent.getLongExtra(TimerService.INTENT_TIME_LEFT, 0);
+            if (timeRemaining > 0) {
+                startStop.setText(getString(R.string.btn_seconds_remaining, timeRemaining));
+            } else {
+                updateButtonText();
+            }
         }
     };
 }
